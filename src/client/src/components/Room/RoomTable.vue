@@ -1,18 +1,17 @@
 <template>
   <v-container fluid>
-
     <v-layout row wrap>
       <v-flex xs4></v-flex>
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="3" 
-          :seatusername="seats[3].username"
+          :username="usernames[3]"
+          @action-sit-down="actionSitDown(3)"
+          @action-stand-up="actionStandUp(3)"
         ></apps-room-table-seat>
       </v-flex>
       <v-flex xs4></v-flex>
       <v-flex xs12><br></v-flex>
     </v-layout>
-
     <v-layout row wrap
       :style="{
         'background-image': 'url(' + require('./static/background.jpg') +')',
@@ -21,52 +20,51 @@
       }"
     >
       <v-flex xs12><br><br><br></v-flex>
-
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="4" 
-          :seatusername="seats[4].username"
+          :username="usernames[4]"
+          @action-sit-down="actionSitDown(4)"
+          @action-stand-up="actionStandUp(4)"
         ></apps-room-table-seat>
       </v-flex>
       <v-flex xs4></v-flex>
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="2" 
-          :seatusername="seats[2].username"
+          :username="usernames[2]"
+          @action-sit-down="actionSitDown(2)"
+          @action-stand-up="actionStandUp(2)"
         ></apps-room-table-seat>      
       </v-flex>
-
       <v-flex xs12><br><br><br></v-flex>
-
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="5" 
-          :seatusername="seats[5].username"
+          :username="usernames[5]"
+          @action-sit-down="actionSitDown(5)"
+          @action-stand-up="actionStandUp(5)"
         ></apps-room-table-seat>      
       </v-flex>
       <v-flex xs4></v-flex>
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="1" 
-          :seatusername="seats[1].username"
+          :username="usernames[1]"
+          @action-sit-down="actionSitDown(1)"
+          @action-stand-up="actionStandUp(1)"
         ></apps-room-table-seat>      
       </v-flex>
-
       <v-flex xs12><br><br><br></v-flex>
     </v-layout>
-
     <v-layout row wrap>
       <v-flex xs12><br></v-flex>
       <v-flex xs4></v-flex>
       <v-flex xs4>
         <apps-room-table-seat 
-          :seat="0" 
-          :seatusername="seats[0].username"
+          :username="usernames[0]"
+          @action-sit-down="actionSitDown(0)"
+          @action-stand-up="actionStandUp(0)"
         ></apps-room-table-seat>
       </v-flex>
       <v-flex xs4></v-flex>
     </v-layout>
-
   </v-container>
 </template>
 
@@ -88,13 +86,8 @@
       }
     },
     data: () => ({
-      seats: [
-        { id: 0, username: '',  }, 
-        { id: 1, username: '',  },
-        { id: 2, username: '',  },
-        { id: 3, username: '',  },
-        { id: 4, username: '',  },
-        { id: 5, username: '',  },
+      usernames: [
+        '', '', '', '', '', '',
       ],
     }),
     computed: {
@@ -104,17 +97,30 @@
     },
     methods: {
       ...mapActions({
-        
-      }),      
+        setUserAttr: 'setUserAttr'
+      }),
+      actionSitDown (seatindex) {
+        this.setUserAttr({seat: seatindex})
+        this.$set(this.usernames, seatindex, this.user.name)
+        this.socket.emit('set-user-seat-sit-down', {id: seatindex})
+      },
+      actionStandUp (seatindex) {
+        this.setUserAttr({seat: -1})
+        this.$set(this.usernames, seatindex, '')
+        this.socket.emit('set-user-seat-stand-up', {id: seatindex})
+      }
     },
     created () {
       this.socket.emit(
-        'get-seats', {}, (response) => {
-          this.seats = response
+        'get-names', {}, (response) => {
+          this.usernames = response
         }
       )
-      this.socket.on('srv-seats-set', (payload) => {
-        this.seats = payload
+      this.socket.on('srv-set-seats-sit-down', (payload) => {
+        this.$set(this.usernames, payload.id, payload.name)
+      })
+      this.socket.on('srv-set-seats-stand-up', (payload) => {
+        this.$set(this.usernames, payload.id, '')
       })
       this.socket.on('srv-set-route', (payload) => {
         this.$router.push(payload)

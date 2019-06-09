@@ -1,29 +1,29 @@
 <template>
   <v-layout row wrap>
     <!-- seat is open to sitdown -->
-    <template v-if="seatusername === ''">
+    <template v-if="username === ''">
       <v-flex xs12>
         <v-btn 
           block 
           class="primary white--text"
-          @click.native="setUserSeat(seat)"
+          @click.native="actionSitDown()"
         >
           <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; SIT DOWN
         </v-btn>
       </v-flex>
     </template>
     <!-- seat is taken by user in this view -->
-    <template v-else-if="seatusername === user.name">
+    <template v-else-if="username === user.name">
       <v-flex xs6>
         <v-btn block outline class="primary primary--text">
-          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ seatusername }}
+          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ username }}
         </v-btn>
       </v-flex>
       <v-flex xs6>
         <v-btn 
           block 
           class="primary white--text"
-          @click.native="setUserUnseat(seat)"
+          @click.native="actionStandUp()"
         >
           <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; STAND UP
         </v-btn>
@@ -33,7 +33,7 @@
     <template v-else>
       <v-flex xs12>
         <v-btn block outline class="primary primary--text">
-          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ seatusername }}
+          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ username }}
         </v-btn>
       </v-flex>
     </template>
@@ -48,8 +48,7 @@
   export default {
     name: 'apps-room-table-seat',
     props: {
-      seat: Number,
-      seatusername: {
+      username: {
         type: String,
         default: ''
       }
@@ -66,15 +65,11 @@
       ...mapActions({
         setUserAttr: 'setUserAttr'
       }),
-      setUserSeat (seat) {
-        console.log('set-user-seat:', this.user.name, 'to seat', seat)
-        this.setUserAttr({seat: seat})
-        this.socket.emit('set-user-seat', {seat: seat})
+      actionSitDown () {
+        this.$emit('action-sit-down')
       },
-      setUserUnseat (seat) {
-        console.log('set-user-unseat:', this.user.name, 'from seat', seat)
-        this.setUserAttr({seat: -1})
-        this.socket.emit('set-user-unseat', {seat: seat})
+      actionStandUp () {
+        this.$emit('action-stand-up')
       }
     },
     mounted () {

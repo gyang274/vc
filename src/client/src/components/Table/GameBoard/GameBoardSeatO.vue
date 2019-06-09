@@ -1,0 +1,143 @@
+<template>
+  <v-layout row wrap game-board-seat-o>
+    <!-- username & note -->
+    <v-flex xs4></v-flex>
+    <v-flex xs2>
+      <apps-player-profile
+        :username="username"
+      ></apps-player-profile>
+    </v-flex>
+    <v-flex xs3>
+      <apps-player-note
+      ></apps-player-note>
+    </v-flex>
+    <v-flex xs3></v-flex>
+    <!-- seat on playing area -->
+    <template v-if="status === 'wait' || status === 'waitOk'">
+      <v-flex xs3></v-flex>
+      <v-flex xs6>
+        <v-btn 
+          block 
+          class="primary white--text"
+          :disabled="status === 'waitOk'"
+        >
+          开始
+        </v-btn>
+      </v-flex>
+      <v-flex xs3></v-flex>
+      <v-flex xs12>
+        <apps-player-hand
+          :cards="[]"
+          :isFaceDown="true"
+          :cardsActivatible="false"
+        ></apps-player-hand>
+      </v-flex>
+    </template>
+    <template v-else-if="status === 'exec' || status === 'execOk' || status === 'play' || status === 'ende'">
+      <v-flex xs4></v-flex>
+      <v-flex xs4>
+        <apps-player-hand
+          :cards="cardsOnHand"
+          :isFaceDown="!isHandEnded"
+          :cardsActivatible="false"
+        ></apps-player-hand>
+      </v-flex>
+      <v-flex xs4></v-flex>
+      <v-flex xs4></v-flex>
+      <v-flex xs4>
+        <apps-player-hand-out
+          :cards="cardsOfHand"
+          :isFaceDown="false"
+          :direction="'down'"
+        ></apps-player-hand-out>
+      </v-flex>
+      <v-flex xs4></v-flex>
+    </template>
+    <template v-else>
+      GameBoardSeatO.vue: unknown status - {{ status }}
+    </template>
+  </v-layout>
+</template>
+
+<script>
+
+  // import PlayerAction from './GameBoardSeat/PlayerAction'
+  import PlayerHand from './GameBoardSeat/PlayerHand'
+  import PlayerHandOut from './GameBoardSeat/PlayerHandOut'
+  import PlayerNote from './GameBoardSeat/PlayerNote'
+  import PlayerProfile from './GameBoardSeat/PlayerProfile'
+
+  export default {
+    name: 'apps-board-seat-player',
+    components: {
+      // appsPlayerAction: PlayerAction,
+      appsPlayerHand: PlayerHand,
+      appsPlayerHandOut: PlayerHandOut,
+      appsPlayerNote: PlayerNote,
+      appsPlayerProfile: PlayerProfile,
+    },
+    props: {
+      username: {
+        type: String,
+        default: ''
+      },
+      status: {
+        type: String,
+        default: 'wait'
+      },
+      note: {
+        type: Array,
+        default: () => ([
+          
+        ])
+      },
+      cards: {
+        type: Array,
+        default: () => ([
+          { suit: 'X', rank: '-1' }, 
+          { suit: 'X', rank: '-1' },
+          { suit: 'X', rank: '-1' },
+        ])
+      },
+      cardsOut: {
+        type: Array,
+        default: () => ([
+
+        ])
+      },
+    },
+    data: () => ({
+
+    }),
+    computed: {
+      isHandEnded () {
+        return this.status === 'ende' || (this.cardsOut.length === 1 && this.cardsOut[0].rank === '3')
+      },
+      cardsOnHand () {
+        if (this.isHandEnded) return this.cardsOut
+        return this.cards
+      },
+      cardsOfHand () {
+        if (this.isHandEnded) return []
+        return this.cardsOut
+      }
+    },
+    methods: {
+    
+    },
+    created () {
+
+    },
+    mounted () {
+
+    },
+  }
+</script>
+
+<style scoped>
+
+.game-board-seat-o {
+  transform: translateY(3.2rem)
+}
+
+</style>

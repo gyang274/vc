@@ -4,62 +4,41 @@
       <v-container fluid>
         <v-slide-y-transition mode="out-in">
           <v-layout row wrap>
-            <v-flex xs12>
-              <apps-title title="玩呗！"></apps-title>
+            <!-- <v-flex xs12>
+              <apps-title title="够级！"></apps-title>
             </v-flex>
             <v-flex xs12><br><br></v-flex>
-            <!-- <v-flex xs12 v-if="status === 'wait'"> -->
+            <v-flex xs4>
+              <apps-player-profile></apps-player-profile>
+            </v-flex>  
+            <v-flex xs8></v-flex>
             <v-flex xs12>
-              <v-btn 
-                block 
-                class="primary white--text"
-                @click.native="setUserHandReady(0)"
-                :disabled="waitReady"
-              >
-                <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; 开
-              </v-btn>
+              <apps-player-hand
+                :isFaceDown="false"
+                @cards-activate="activateCards"
+              ></apps-player-hand>
             </v-flex>
-            <!-- <v-flex xs12 v-else-if="status === 'exec'"> -->
-              <v-flex xs12>
-                <v-container fluid>
-                 <v-layout row wrap>
-              <v-flex xs12 cards style="position: relative;">
-                    
-        <apps-playing-card
-          v-for="(card, i) in hand.cards"
-          :key="i"
-          :card="card"
-          :isFaceDown="false"
-          :style="
-            'position: absolute;' + 
-            'left:' + (i + 2) * 40 + 'px' 
-          "
-          :class="{abcd: acitveCards.includes(i)}"
-          @click.native="abc(i)"
-        />
-
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
-<v-flex xs12><br><br></v-flex>
+            <v-flex xs12>
+              <apps-player-hand-out
+                :isFaceDown="false"
+                :direction="'down'"
+              ></apps-player-hand-out>
             </v-flex>
-                 </v-layout>
-                </v-container>
-          </v-flex>
-            <!-- <v-flex xs12 v-else> -->
-              <v-flex xs12 style="position: relative;">
-              
-                <v-btn 
-                  block 
-                  class="primary white--text"
-                  @click.native="setUserHandReady(0)"
-                  :disabled="waitReady"
-                >
-                  让我出牌
-                </v-btn>
+            <v-flex xs12>
+              <apps-player-action
+                @action-pass="actionPass()"
+                @action-ask="actionAsk()"
+                @action-out="actionOut()"
+              ></apps-player-action>
+            </v-flex> -->
+            <!-- <v-flex xs12>
+              <apps-game-board></apps-game-board>
+            </v-flex> -->
+            <!-- <v-flex xs12>
+              <apps-player-hand></apps-player-hand>
+            </v-flex> -->
+            <v-flex xs12>
+              <apps-player-timer></apps-player-timer>
             </v-flex>
           </v-layout>
         </v-slide-y-transition>
@@ -73,24 +52,27 @@
   import { mapGetters, mapActions } from 'vuex'
 
   // @ is an alias to /src
-  import Title from '@/components/Title'
-  import PlayingCard from '@/components/Table/Game/PlayingCard.vue'
+  // import Title from '@/components/Title'
+  // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
+  // import PlayerHand from '@/components/Table/GameBoard/GameBoardSeat/PlayerHand'
+  // import PlayerHandOut from '@/components/Table/GameBoard/GameBoardSeat/PlayerHandOut'
+  // import PlayerAction from '@/components/Table/GameBoard/GameBoardSeat/PlayerAction'
+  // import GameBoard from '@/components/Table/GameBoard'
+  import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
 
   export default {
-    name: 'apps-table',
+    name: 'apps-test',
     components: {
-      appsTitle: Title,
-      appsPlayingCard: PlayingCard
+      // appsTitle: Title,
+      // appsPlayerProfile: PlayerProfile,
+      // appsPlayerHand: PlayerHand,
+      // appsPlayerHandOut: PlayerHandOut,
+      // appsPlayerAction: PlayerAction,
+      // appsGameBoard: GameBoard,
+      appsPlayerTimer: PlayerTimer,
     },
     data: () => ({
-      status: 'wait', // 'exec', 'main'
-      waitReady: false,
-      hand: {
-        cards: [
-          {suit: 'C', rank: 'A'}
-        ]
-      },
-      acitveCards: []
+      activeCardsIndex: []
     }),
     computed: {
       ...mapGetters({
@@ -101,39 +83,28 @@
       ...mapActions({
         
       }),
-      setUserHandReady () {
-        this.waitReady = true
-        this.socket.emit(
-          'set-user-hand-ready', { 
-            seat: this.user.seat, username: this.user.name
-          }
+      activateCards (payload) {
+        console.log('activateCards:', this.activeCardsIndex = payload)
+      },
+      actionPass () {
+        console.log(
+          'user', this.user.name, 
+          'at seat', this.user.seat,
+          'action-pass', this.activeCardsIndex,
+          'remember to reset activeCards to []'
         )
       },
-      setUserHandExec () {
-
+      actionAsk () {
+        console.log('action ask')
       },
-      setUserHandOut () {
-        
-      },
-      abc (idx) {
-        console.log('hi', idx)
-        let index = this.acitveCards.indexOf(idx);
-        if (index !== -1) {
-          this.acitveCards.splice(index, 1);
-        } else {
-          this.acitveCards.push(idx)
-        }
-      },
-
+      actionOut () {
+        console.log('action out')
+      }
     },
     created () {
-      // if user.name === '' direct to home page
-      this.socket.on('srv-new-hands', (payload) => {
-        console.log('srv-new-hands', payload)
-        this.socket.emit('get-hands', {}, (response) => {
-          this.hand = response
-        })
-      })
+      
+    },
+    mounted () {
 
     }
   }
@@ -141,9 +112,5 @@
 
 
 <style scoped>
-
-.abcd {
-  top: -20px
-}
 
 </style>

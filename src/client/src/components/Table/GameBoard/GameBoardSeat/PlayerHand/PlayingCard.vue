@@ -6,7 +6,7 @@
     <div class="front">
       <div class="top-corner">
         <apps-playing-card-rank :rank="card.rank" :suit="card.suit" />
-        <apps-playing-card-suit :suit="card.suit" />
+        <apps-playing-card-suit :rank="card.rank" :suit="card.suit" />
       </div>
     </div>
     <div class="back" />
@@ -59,12 +59,12 @@
 }
 .card .front {
   background-image: url('./static/card-front.svg');
-  background-color: rgb(127, 127, 127);
+  background-color: rgb(96, 96, 192);
 }
 .card .back {
   background-image: url('./static/card-back.svg');
   transform: rotateY(-180deg);
-  background-color: $red;
+  background-color: #E04030;
 }
 .card.face-down .front {
   transform: rotateY(180deg);

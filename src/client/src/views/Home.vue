@@ -6,7 +6,7 @@
           <v-layout row wrap>
             <v-flex xs12><br><br></v-flex>
             <v-flex xs12>
-              <apps-title title="够级 - 欢迎来玩！"></apps-title>
+              <apps-title title="有桌够级 - 欢迎来玩！"></apps-title>
             </v-flex>
             <v-flex xs12><br><br></v-flex>
             <!-- user id -->
@@ -26,7 +26,7 @@
                 @click.native="setUserName(username)"
               >
                 <v-icon dark>whatshot</v-icon>&nbsp;&nbsp;
-                Enter Game Boardroom！ - 进入够级大厅！
+                Enter Game Boardroom！ - 进入有桌够级大厅！
               </v-btn>
             </v-flex>
           </v-layout>
@@ -69,8 +69,10 @@
       }
     },
     created () {
+      // manual open socket
+      // this.socket.open()
       // get status from server, and direct to room/table accordingly
-      this.socket.on('srv-set-user', (payload) => {
+      this.socket.on('srv-set-user-attr', (payload) => {
         this.setUserAttr(payload)
       })
       this.socket.on('srv-set-route', (payload) => {
