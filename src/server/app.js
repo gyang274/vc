@@ -19,26 +19,40 @@ let route = {
 }
 
 let seats =  [
-  { id: 0, username: '', status: 'room' }, 
-  { id: 1, username: 'fyy', status: 'exec' },
-  { id: 2, username: 'def', status: 'exec' },
-  { id: 3, username: 'zzz', status: 'exec' },
-  { id: 4, username: 'hij', status: 'exec' },
-  { id: 5, username: 'lmn', status: 'exec' },
+  { id: 0, name: '', status: 'room' }, 
+  { id: 1, name: '', status: 'room' },
+  { id: 2, name: '', status: 'room' },
+  { id: 3, name: '', status: 'room' },
+  { id: 4, name: '', status: 'room' },
+  { id: 5, name: '', status: 'room' },
+]
+// seats: status: <'none'> -> 'room' -> 'sitd' ->
+//  'wait' -> 'exec' -> 'execOk' -> 'play' ->auto 'ende' ->auto 'wait'
+
+let cards = [
+  [], [], [], [], [], [], 
 ]
 
-// seats: status: 'room' -> 'wait' -> 'exec' -> 'play' -> 'wait'
-
-let hands = [
-  {}, {}, {}, {}, {}, {}
+let cardsOut = [
+  [], [], [], [], [], [], 
 ]
+
+// let onHand = [0, 0, 0]
+let prevId = 0
+
+let currId = 0
+
+let nextId = 0
+
+// let asksId = [] // for server to send signals
+
 
 io.on('connection', (socket) => {
 
   console.log('connection from:', socket.id)
 
-  // set user { name, room, seat, .. }
-  socket.user = { name: '', room: '', seat: 0 }
+  // set user { name, room, table, seat, .. }
+  socket.user = { name: '', room: '', seat: -1 }
 
   // set user name
   socket.on('set-user-name', (payload) => {
@@ -51,9 +65,9 @@ io.on('connection', (socket) => {
   
       socket.broadcast.emit('srv-user-join', payload)
   
-      // set user seat/hands from server
+      // set user seat/hands from server (@reconnection)
       seats.forEach(seat => {
-        if (seat.username === payload.username) {
+        if (seat.name === payload.name) {
           socket.user.seat = seat.id
           socket.emit('srv-set-user-attr', { seat: seat.id })
         }
@@ -66,22 +80,34 @@ io.on('connection', (socket) => {
   })
 
   // set user seat
-  socket.on('set-user-seat', (payload) => {
+  socket.on('set-user-seat-sit-down', (payload) => {
 
-    console.log('set-user-seat:', socket.user.name, 'from seat', socket.user.seat, 'to seat', payload)
+    console.log('set-user-seat-sit-down:', socket.user.name, 'from seat', socket.user.seat, 'to seat', payload)
 
     if (socket.user.seat !== -1) {
-      seats[socket.user.seat].username = ''
+      seats[socket.user.seat].name = ''
       seats[socket.user.seat].status = 'room'
     }
 
-    socket.user.seat = payload.seat
+    socket.user.seat = payload.id
 
-    seats[payload.seat].username = socket.user.name
-    seats[payload.seat].status = 'wait' 
+    if (seats[payload.id].name === '') {
 
-    io.emit('srv-seats-set', seats)
+      seats[payload.id].name = socket.user.name
+      seats[payload.id].status = 'wait' 
 
+      socket.broadcast.emit('srv-set-seats-sit-down', {
+        id: payload.id, name: socket.user.name
+      })
+
+    } else {
+
+      socket.emit('srv-set-seats-sit-down', {
+        id: payload.id, name: seats[payload.id].name
+      })
+
+    }
+    
     if (_(seats).map('status').every(v => v === 'wait')) {
 
       route = {
@@ -95,42 +121,128 @@ io.on('connection', (socket) => {
   })
 
   // set user unseat
-  socket.on('set-user-unseat', (payload) => {
+  socket.on('set-user-seat-stand-up', (payload) => {
     
-    console.log('set-user-unseat:', socket.user.name, 'from seat', payload)
+    console.log('set-user-seat-stand-up:', socket.user.name, 'from seat', payload)
 
     socket.user.seat = -1
 
-    seats[payload.seat].username = ''
-    seats[payload.seat].status = 'room'
+    seats[payload.id].name = ''
+    seats[payload.id].status = 'room'
 
-    io.emit('srv-seats-set', seats)
+    socket.broadcast.emit('srv-set-seats-stand-up', {
+      id: payload.id, name: socket.user.name
+    })
 
   })
 
-  // set user hand ready
-  socket.on('set-user-hand-ready', (payload) => {
+  // set user hand wait ok
+  socket.on('set-user-hand-wait-ok', (payload) => {
 
-    console.log('payload', payload)
+    console.log('set-user-hand-wait-ok', payload)
 
-    seats[socket.user.seat].status = 'exec'
+    seats[payload.seat].status = 'waitOk'
+    // seats[socket.user.seat].status = 'waitOk'
 
-    if (_(seats).map('status').every(v => v === 'exec')) {
+    socket.broadcast.emit('srv-user-hand-wait-ok', payload)
 
-      hands = core.setHands()
+    if (_(seats).map('status').every(v => v === 'waitOk')) {
 
-      io.emit('srv-new-hands')
+      cards = core.setCards()
+
+      // TODO: MUST remove after test
+      cards.forEach(
+        icards => icards.unshift({rank: '3', suit: 'H', rnum: 3, snum: 2})
+      )
+
+      io.emit('srv-hands-init')
 
     }
 
   })
 
+  // set user hand exec
+  socket.on('set-user-hand-exec', (payload) => {
+    // TODO send news out..
+    socket.broadcast.emit(
+      'srv-user-hand-exec', payload
+    )
+  })
+
+  // set user hand exec ok
+  socket.on('set-user-hand-exec-ok', (payload) => {
+
+    console.log('set-user-hand-exec-ok', payload)
+
+    seats[socket.user.seat].status = 'execOk'
+
+    socket.broadcast.emit('srv-user-hand-exec-ok', payload)
+
+    if (_(seats).map('status').every(v => v === 'execOk')) {
+
+      io.emit('srv-plays-init')
+
+    }
+
+  })
+
+  // set-user-hand-cout
+  socket.on('set-user-hand-cout', (payload) => {
+
+    // check core.isCardsOutValid on client side
+
+    // TODO: check isGoJi, isGoJiZhen
+  
+    // clean previous cardsOut
+    socket.broadcast.emit(
+      'srv-user-hand-cout', {
+        id: prevId, cards: []
+      }
+    )
+
+    prevId = payload.id
+
+    socket.broadcast.emit(
+      'srv-user-hand-cout', payload 
+    )
+
+  })
+
+  socket.on('set-user-hand-ende', (payload) => {
+
+    seats[payload.id].status = 'ende'
+
+    socket.broadcast.emit(
+      'srv-user-hand-ende', {
+        'id': payload.id, cards: []
+      }
+    )
+
+    console.log('seats: ', seats)
+
+    if (_(seats).map('status').every(v => v === 'ende')) {
+
+      payload = {}
+      
+      payload.news = '这把打完，服务器现在比较笨，也不知道谁开没开点，烧没🔥人，自个自觉吧，静待服务器升级！'
+
+      io.emit('srv-hands-ende', payload)
+
+    }
+
+  })
+
+  // TODO
+
+  // server need to decide when game is ende and show stats
+  // restart everyone to wait
+
 
 
 
   // get-seats
-  socket.on('get-seats', (payload, fn) => {
-    fn(seats)
+  socket.on('get-names', (payload, fn) => {
+    fn(_.map(seats, 'name'))
   })
 
   // get-route
@@ -139,15 +251,20 @@ io.on('connection', (socket) => {
   })
 
   // get-hands
-  socket.on('get-hands', (payload, fn) => {
-    // payload: { seat: [0-6], username: '' }
-    fn(hands[socket.user.seat])
+  socket.on('get-cards', (payload, fn) => {
+    if (payload.id === socket.user.seat) {
+      fn(cards[socket.user.seat])
+    } else {
+      console.log('get-cards:', 'mismatch', payload, 'and', socket.user, '?')
+      fn([])
+    }
   })
 
+  // disconnect
   socket.on('disconnect', () => {
     socket.broadcast.emit(
       'srv-user-left', {
-        username: socket.user.name
+        name: socket.user.name
       } 
     )
   })
@@ -155,24 +272,3 @@ io.on('connection', (socket) => {
 
 })
 
-
-
-function initHands (io, socket) {
-
-  let hands = core.setHands()
-
-  console.log('initHands:', hands[0].cards[0])
-
-  socket.emit('srv-new-hands', hands[socket.user.seat])
-
-
-}
-
-
-function exHands (io, socket) {
-
-}
-
-function onHands (io, socket) {
-
-}

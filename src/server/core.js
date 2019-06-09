@@ -9,7 +9,7 @@ const suitNum = {
   'D': 1,
   'H': 2,
   'S': 3,
-  'X': 4
+  'T': 4
 }
 
 const rankNum = {
@@ -30,14 +30,11 @@ const rankNum = {
   '1': 17,
 }
 
-const dNote = {
-  dian: -1,
-  bdian: -1,
-  mens: -1,
-  bmens: -1,
-  shao: -1,
-  bshao: -1,
-  lake: -1
+const dnotes = {
+  dian: [0, 1, 2, 3, 4, 5],
+  mens: [(0, 1), ],
+  shao: [(0, 1), ],
+  lake: [0, 1, 2, 3, 4, 5],
 }
 
 
@@ -47,7 +44,8 @@ function setDeck () {
 
   function setDeckCore () {
     const suits = ['C', 'D', 'H', 'S']
-    const ranks = ['5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
+    // const ranks = ['5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
+    const ranks = ['5', '8', 'K', '2']
     let deck = []
     suits.forEach(suit => {
       ranks.forEach(rank => {
@@ -57,10 +55,10 @@ function setDeck () {
       })
     })
     deck.push({
-      suit: 'X', rank: '0'
+      suit: 'T', rank: '0'
     })
     deck.push({
-      suit: 'X', rank: '1'
+      suit: 'T', rank: '1'
     })
     return deck
   }
@@ -89,60 +87,212 @@ function setDeck () {
 }
 
 
-// setHands
-//   set a table of 6 players hands of cards and notes
-function setHands () {
+// setCards
+//   set a table of 6 players hands of cards
+function setCards () {
   
-  let deck = _(setDeck()).shuffle()
+  let deck = _.shuffle(setDeck())
 
-  let hands = []
+  let cards = []
   for (let i = 0; i < 6; i++) {
-    hands.push({
-      cards: _(
-        deck.filter(
-          (card, index) => (index + 6 - i) % 6 === 0
-        )
-      ).sortBy(
-        ['rnum', 'snum']
-      ).value(),
-      note: dNote
+    cards.push(
+      _.sortBy(
+        _.filter(
+          deck, (card, index) => (index + 6 - i) % 6 === 0
+        ), ['rnum', 'snum']
+      )
+    )
+  }
+
+  return cards
+}
+
+
+// setNotes
+//   set a table of 6 player notes on games
+function setNotes () {
+
+  let notes = []
+
+  for (let i = 0; i < 6; i++) {
+    notes.push({
+      dian: [],
+      ddian: [],
+      mens: [],
+      dmens: [],
+      shao: [],
+      dshao: [],
+      lake: []
     })
   }
 
-  return hands
+  return notes
 }
 
 
-// setPlayer
-//   set player from database
-function setPlayer (seat) {
+// check cardsOut
+function isCardsOutValid (cardsOut) {
 
-  player = {
-    seat: seat,
-    note: dNote,
-    coin: 0
+  let numCardsByRank = _.countBy(cardsOut, 'rank')
+
+  let ranks = Object.keys(numCardsByRank)
+
+  let numCards = _.sum(Object.values(numCardsByRank))
+
+  if (ranks.includes('3') ) {
+    return numCards === 1
+  } else if (ranks.includes('4')) {
+    return numCards === 1
+  } else {
+    return _.without(ranks, '0', '1', '2').length <= 1
+  }
+  
+}
+
+// check cardsOut is GoJi, assume cardsOut is valid
+function isCardsOutGoJi (cardsOut) {
+
+  let numCardsByRank = _.countBy(cardsOut, 'rank')
+
+  let ranks = Object.keys(numCardsByRank)
+
+  let numCards = _.sum(Object.values(numCardsByRank))
+
+  if (ranks.includes('0') || ranks.includes('1')) {
+    return true
+  } else if (ranks.includes('2') || ranks.length === 1) {
+    return true
+  } else if (ranks.includes('A') && numCards >= 2) {
+    return true
+  } else if (ranks.includes('K') && numCards >= 2) {
+    return true
+  } else if (ranks.includes('Q') && numCards >= 3) {
+    return true
+  } else if (ranks.includes('J') && numCards >= 4) {
+    return true
+  } else if (ranks.includes('10') && numCards >= 5) {
+    return true
+  } else {
+    return false
   }
 
-  return player
+  return false
 }
 
+// check cardsOut is GoJi 4 kai dian, assume cardsOut is GoJi
+function isCardsOutGoJi4Kd (cardsOut) {
 
-// setBoard
-//   set a board of 6 players [{}, ..]
-function setBoard (ids) {
+  let numCardsByRank = _.countBy(cardsOut, 'rank')
 
-  let board = []
-  for (let i = 0; i < 6; i++) {
-    board.push(setPlayer(ids[i]))
+  let ranks = Object.keys(numCardsByRank)
+
+  return !ranks.some(rank = ['0', '1', '2'].includes(rank))
+
+}
+
+// check cardsOut can beat previous cardsOut, assume cardsOut is valid
+function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
+  
+  let numCardsByRank = _.countBy(cardsOut, 'rank')
+
+  let ranks = Object.keys(numCardsByRank)
+
+  // let numCards = _.sum(Object.values(numCardsByRank))
+
+  let prevNumCardsByRank = _.countBy(prevCardsOut, 'rank')
+
+  let prevRanks = Object.keys(prevNumCardsByRank)
+
+  // let prevNumCards = _.sum(Object.values(prevNumCardsByRank))
+
+  if (prevRanks.includes('0')) {
+    if (numCardsByRank['1'] >= prevNumCardsByRank['0']) {
+      delete prevNumCardsByRank['0']
+      prevRanks = _.pull(prevRanks, '0')
+      numCardsByRank['1'] = numCardsByRank['1'] - prevNumCardsByRank['0']
+      if (numCardsByRank['1'] === 0) {
+        delete numCardsByRank['1']
+        ranks = _.pull(ranks, '1')
+      }
+    } else {
+      return false
+    }
+  } 
+  
+  if (prevRanks.includes('1')) {
+    if (numCardsByRank['2'] >= 3 * prevNumCardsByRank['1']) {
+      delete prevNumCardsByRank['1']
+      prevRanks = _.pull(prevRanks, '0')
+      numCardsByRank['2'] = numCardsByRank['2'] - 3 * prevNumCardsByRank['1']
+      if (numCardsByRank['2'] === 0) {
+        delete numCardsByRank['2']
+        ranks = _.pull(ranks, '2')
+      }
+    } else {
+      return false
+    }
   }
 
-  return board
+  if (prevRanks.includes['2'] && prevRanks.length === 1) {
+    if (numCardsByRank['0'] + numCardsByRank['1'] === prevNumCardsByRank['2'] 
+    && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
+    ) {
+      return true
+    } else {
+      return false
+    }
+  }
+
+  if (_.min(_.map(ranks, r => rankNum[r])) > _.min(_.map(prevRanks, r => rankNum[r]))
+  && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
+  ) {
+    return true
+  } else {
+    return false
+  }
+
+  return false
 }
 
 
+function resNotes (notes) {
+  // give suggestions on mai3/mai4/gong
+}
+
+function isHandDian (cardsOut, index) {}
+function isHandShao () {}
+function isHandMens () {}
+
+// isHandEnde
+// inputs:
+//  cards: cardsOnHand of one player
+function isHandEnde (cards) {
+
+  return cards.length === 0
+
+}
+
+// isGameEnde
+// inputs:
+//  cards: cardsOnHand of 6 players, [[], [], [], [], [], [],]
+function isGameEnde (cards) {
+
+  if ((isHandEnde(cards[0]) && isHandEnde(cards[2]) && isHandEnde(cards[4]))
+   || (isHandEnde(cards[1]) && isHandEnde(cards[3]) && isHandEnde(cards[5]))
+  ) {
+    return true
+  }
+  return false
+}
 
 
-
+// module.exports
 module.exports = {
-  setDeck, setHands
+  setDeck, setCards, setNotes,
+  isCardsOutValid,
+  isCardsOutGoJi,
+  isCardsOutGoJi4Kd,
+  isCardsOutBeatenPrevCardsOut,
+  isHandEnde,
+  isGameEnde,
 }
