@@ -150,11 +150,6 @@ io.on('connection', (socket) => {
 
       cards = core.setCards()
 
-      // TODO: MUST remove after test
-      cards.forEach(
-        icards => icards.unshift({rank: '3', suit: 'H', rnum: 3, snum: 2})
-      )
-
       io.emit('srv-hands-init')
 
     }

@@ -155,7 +155,7 @@
         { name: '下联', id: 2 },
         { name: '弃四', id: 6 },
       ],
-      seconds: 20,
+      restartTimer: 20,
       // msgs from client side to this user
       msgs: '',
       // news from server side to all users
