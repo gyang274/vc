@@ -30,13 +30,6 @@ const rankNum = {
   '1': 17,
 }
 
-const dnotes = {
-  dian: [0, 1, 2, 3, 4, 5],
-  mens: [(0, 1), ],
-  shao: [(0, 1), ],
-  lake: [0, 1, 2, 3, 4, 5],
-}
-
 
 // setDeck
 //   set a deck of 196 cards [{suit, rank, snum, rnum}, ..]
@@ -112,20 +105,42 @@ function setCards () {
 //   set a table of 6 player notes on games
 function setNotes () {
 
-  let notes = []
+  // notes: status: <'none'> -> 'play'/'pass'/'cask'/'cout'/'give'/'ende'
+  let notes = {
+    cardsInit: [
 
-  for (let i = 0; i < 6; i++) {
-    notes.push({
-      dian: [],
-      ddian: [],
-      mens: [],
-      dmens: [],
-      shao: [],
-      dshao: [],
-      lake: []
-    })
+    ],
+    cardsExec: [
+
+    ],
+    hands: [
+  
+    ],
+    prevHand: [
+
+    ],
+    currHand: [
+
+    ],
+    asksId: -1,
+    status: [
+      'play', 'play', 'play', 'play', 'play', 'play',
+    ],
+    numAck: 6,
+    dian: [
+      false, false, false, false, false,
+    ],
+    mens: [
+
+    ],
+    shao: [
+
+    ],
+    lake: [
+      -1, -1, -1, -1, -1, -1,
+    ],
   }
-
+  
   return notes
 }
 
@@ -140,11 +155,11 @@ function isCardsOutValid (cardsOut) {
   let numCards = _.sum(Object.values(numCardsByRank))
 
   if (ranks.includes('3') ) {
-    return numCards === 1
+    return ranks.length === 1
   } else if (ranks.includes('4')) {
-    return numCards === 1
+    return ranks.length === 1
   } else {
-    return _.without(ranks, '0', '1', '2').length <= 1
+    return numCards > 0 && _.without(ranks, '0', '1', '2').length <= 1
   }
   
 }
@@ -160,7 +175,7 @@ function isCardsOutGoJi (cardsOut) {
 
   if (ranks.includes('0') || ranks.includes('1')) {
     return true
-  } else if (ranks.includes('2') || ranks.length === 1) {
+  } else if (ranks.includes('2') && ranks.length === 1) {
     return true
   } else if (ranks.includes('A') && numCards >= 2) {
     return true
@@ -179,16 +194,31 @@ function isCardsOutGoJi (cardsOut) {
   return false
 }
 
-// check cardsOut is GoJi 4 kai dian, assume cardsOut is GoJi
+// check cardsOut is GoJi 4 kai dian, assume cardsOut is valid
 function isCardsOutGoJi4Kd (cardsOut) {
 
   let numCardsByRank = _.countBy(cardsOut, 'rank')
 
   let ranks = Object.keys(numCardsByRank)
 
-  return !ranks.some(rank = ['0', '1', '2'].includes(rank))
+  return isCardsOutGoJi(cardsOut) && !ranks.some(rank => ['0', '1', '2'].includes(rank))
 
 }
+
+// check cardsOut is 3, assume cardsOut is valid
+function isCardsOut3d (cardsOut) {
+
+  return cardsOut[0].rank === '4'
+
+}
+
+// check cardsOut is 4, assume cardsOut is valid
+function isCardsOut4d (cardsOut) {
+
+  return cardsOut[0].rank === '4'
+
+}
+
 
 // check cardsOut can beat previous cardsOut, assume cardsOut is valid
 function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
@@ -256,12 +286,9 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
 
 
 function resNotes (notes) {
-  // give suggestions on mai3/mai4/gong
+  // TODO: give suggestions on mai3/mai4/gong from notes
+  return ':素质游戏，自觉进贡，静待服务器升级！'
 }
-
-function isHandDian (cardsOut, index) {}
-function isHandShao () {}
-function isHandMens () {}
 
 // isHandEnde
 // inputs:
@@ -285,14 +312,58 @@ function isGameEnde (cards) {
   return false
 }
 
+// cardsToString
+function cardsToString (cards) {
+
+  cards = _.reverse(
+    _.sortBy(cards, ['rnum', 'snum'])
+  )
+
+  let str = ''
+
+  for (card of cards) {
+    str += '一张' + cardsSuitToString(card.suit) + cardsRankToString(card.rank) + ' '
+  }
+
+  return str
+
+}
+
+function cardsSuitToString (suit) {
+  if (suit === 'C') {
+    return '梅花'
+  } else if (suit === 'D') {
+    return '钻石'
+  } else if (suit === 'H') {
+    return '红桃'
+  } else if (suit === 'S') {
+    return '黑桃'
+  } else {
+    return ''
+  }
+}
+
+function cardsRankToString (rank) {
+  if (rank === '0') {
+    return '小王'
+  } else if (rank === '1') {
+    return '大王'
+  } else {
+    return rank
+  }
+}
+
 
 // module.exports
 module.exports = {
-  setDeck, setCards, setNotes,
+  setDeck, setCards, setNotes, resNotes,
   isCardsOutValid,
   isCardsOutGoJi,
   isCardsOutGoJi4Kd,
+  isCardsOut3d,
+  isCardsOut4d,
   isCardsOutBeatenPrevCardsOut,
   isHandEnde,
   isGameEnde,
+  cardsToString,
 }

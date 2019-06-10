@@ -1,12 +1,24 @@
 <template>
   <v-layout row wrap game-board-seat-i>
-    <v-flex xs12>
-      <apps-player-hand-out
-        :cards="cardsOfHand"
-        :isFaceDown="false"
-        :direction="'up'"
-      ></apps-player-hand-out>
-    </v-flex>
+    <template v-if="isOnAction">
+      <v-flex xs4></v-flex>
+      <v-flex xs4>
+        <apps-player-timer
+          :isOnAction="isOnAction"
+          @action-time-up="actionTimeUp()"
+        ></apps-player-timer>
+      </v-flex>
+      <v-flex xs4></v-flex>
+    </template>
+    <template v-else>
+      <v-flex xs12>
+        <apps-player-hand-out
+          :cards="cardsOfHand"
+          :isFaceDown="false"
+          :direction="'up'"
+        ></apps-player-hand-out>
+      </v-flex>
+    </template>
     <v-flex xs12><br></v-flex>
     <v-flex xs12>
       <apps-player-hand
@@ -57,6 +69,7 @@
   import PlayerHandOut from './GameBoardSeat/PlayerHandOut'
   import PlayerNote from './GameBoardSeat/PlayerNote'
   import PlayerProfile from './GameBoardSeat/PlayerProfile'
+  import PlayerTimer from './GameBoardSeat/PlayerTimer'
 
   export default {
     name: 'apps-board-seat-player-i',
@@ -66,6 +79,7 @@
       appsPlayerHandOut: PlayerHandOut,
       appsPlayerNote: PlayerNote,
       appsPlayerProfile: PlayerProfile,
+      appsPlayerTimer: PlayerTimer,
     },
     props: {
       username: {
@@ -88,16 +102,20 @@
 
         ])
       },
+      cardsOnHandActiveIndex: {
+        type: Array,
+        default: () => ([])
+      },
       cardsOfHand: {
         type: Array,
         default: () => ([
           { suit: 'S', rank: '2' },
         ])
       },
-      cardsOnHandActiveIndex: {
-        type: Array,
-        default: () => ([])
-      }
+      isOnAction: {
+        type: Boolean,
+        default: false
+      }      
     },
     data: () => ({
 
@@ -126,7 +144,10 @@
       },
       actionCardActivate (index) {
         this.$emit('action-card-activate', index)
-      }
+      },
+      actionTimeUp () {
+        this.$emit('action-time-up')
+      },
     },
     created () {
 

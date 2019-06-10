@@ -43,15 +43,22 @@
         ></apps-player-hand>
       </v-flex>
       <v-flex xs4></v-flex>
-      <v-flex xs4></v-flex>
-      <v-flex xs4>
-        <apps-player-hand-out
-          :cards="cardsOfHand"
-          :isFaceDown="false"
-          :direction="'down'"
-        ></apps-player-hand-out>
-      </v-flex>
-      <v-flex xs4></v-flex>
+      <template v-if="isOnAction">
+        <v-flex xs12>
+          <apps-player-timer
+            :isOnAction="isOnAction"
+          ></apps-player-timer>
+        </v-flex>
+      </template>
+      <template v-else>
+        <v-flex xs12>
+          <apps-player-hand-out
+            :cards="cardsOfHand"
+            :isFaceDown="false"
+            :direction="'down'"
+          ></apps-player-hand-out>
+        </v-flex>
+      </template>
     </template>
     <template v-else>
       GameBoardSeatO.vue: unknown status - {{ status }}
@@ -66,15 +73,17 @@
   import PlayerHandOut from './GameBoardSeat/PlayerHandOut'
   import PlayerNote from './GameBoardSeat/PlayerNote'
   import PlayerProfile from './GameBoardSeat/PlayerProfile'
+  import PlayerTimer from './GameBoardSeat/PlayerTimer'
 
   export default {
-    name: 'apps-board-seat-player',
+    name: 'apps-board-seat-player-o',
     components: {
       // appsPlayerAction: PlayerAction,
       appsPlayerHand: PlayerHand,
       appsPlayerHandOut: PlayerHandOut,
       appsPlayerNote: PlayerNote,
       appsPlayerProfile: PlayerProfile,
+      appsPlayerTimer: PlayerTimer,
     },
     props: {
       username: {
@@ -104,6 +113,10 @@
         default: () => ([
 
         ])
+      },
+      isOnAction: {
+        type: Boolean,
+        default: false
       },
     },
     data: () => ({

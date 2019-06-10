@@ -3,7 +3,7 @@
     <v-progress-circular
       :rotate="-90"
       :size="100"
-      :width="15"
+      :width="23"
       :value="value"
       color="primary"
     >
@@ -18,12 +18,16 @@
       seconds: {
         type: Number,
         default: 20,
+      },
+      isOnAction: {
+        type: Boolean,
+        default: false
       }
     },
     data: () => ({
       interval: {},
       value: 0,
-      secondsLeft: -1
+      secondsLeft: 0
     }),
     computed: {
       sencondsTick () {
@@ -35,12 +39,13 @@
     },
     mounted () {
       this.interval = setInterval(() => {
-        if (this.secondsLeft < 0) {
+        if (this.isOnAction) {
+          this.isOnAction = !this.isOnAction
           this.secondsLeft = this.seconds
         } else if (this.secondsLeft > 0) {
           this.secondsLeft -= 1  
         } else {
-          this.$emit('player-time-up')
+          this.$emit('action-time-up')
         }
         this.value = this.secondsLeft * this.sencondsTick
       }, 1000)

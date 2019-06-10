@@ -13,19 +13,28 @@
       </v-flex>
     </template>
     <template v-else-if="status === 'exec' || status === 'execOk' || status === 'play' || status === 'ende'">
+      <template v-if="isOnAction">
+        <v-flex xs5>
+          <apps-player-timer
+            :isOnAction="isOnAction"
+          ></apps-player-timer>
+        </v-flex>
+      </template>
+      <template v-else>
+        <v-flex xs5>
+          <apps-player-hand-out
+            :cards="cardsOfHand"
+            :isFaceDown="false"
+            :direction="'left'"
+          ></apps-player-hand-out>
+        </v-flex>
+      </template>
       <v-flex xs5>
         <apps-player-hand
           :cards="cardsOnHand"
           :isFaceDown="!isHandEnded"
           :cardsActivatible="false"
         ></apps-player-hand>
-      </v-flex>
-      <v-flex xs5>
-        <apps-player-hand-out
-          :cards="cardsOfHand"
-          :isFaceDown="false"
-          :direction="'right'"
-        ></apps-player-hand-out>
       </v-flex>
     </template>
     <template v-else>
@@ -50,6 +59,7 @@
   import PlayerHandOut from './GameBoardSeat/PlayerHandOut'
   import PlayerNote from './GameBoardSeat/PlayerNote'
   import PlayerProfile from './GameBoardSeat/PlayerProfile'
+  import PlayerTimer from './GameBoardSeat/PlayerTimer'
 
   export default {
     name: 'apps-board-seat-player-r',
@@ -59,6 +69,7 @@
       appsPlayerHandOut: PlayerHandOut,
       appsPlayerNote: PlayerNote,
       appsPlayerProfile: PlayerProfile,
+      appsPlayerTimer: PlayerTimer,
     },
     props: {
       username: {
@@ -88,6 +99,10 @@
         default: () => ([
 
         ])
+      },
+      isOnAction: {
+        type: Boolean,
+        default: false
       },
     },
     data: () => ({

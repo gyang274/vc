@@ -10,9 +10,10 @@
       <v-flex xs8>
         <apps-game-board-seat-o
           :username="usernames[3]"
-          :cardsOut="cardsOut[3]"
-          :status="status[3]"
           :note="notes[3]"
+          :status="status[3]"
+          :cardsOut="cardsOut[3]"
+          :isOnAction="isOnAction[3]"
         ></apps-game-board-seat-o>
       </v-flex>
       <v-flex xs2></v-flex>
@@ -21,16 +22,18 @@
         <!-- 上联 -->
         <apps-game-board-seat-l
           :username="usernames[4]"
-          :cardsOut="cardsOut[4]"
-          :status="status[4]"
           :note="notes[4]"
+          :status="status[4]"
+          :cardsOut="cardsOut[4]"
+          :isOnAction="isOnAction[4]"
         ></apps-game-board-seat-l>
         <!-- 上家 -->
         <apps-game-board-seat-l
           :username="usernames[5]"
-          :cardsOut="cardsOut[5]"
-          :status="status[5]"
           :note="notes[5]"
+          :status="status[5]"
+          :cardsOut="cardsOut[5]"
+          :isOnAction="isOnAction[5]"
         ></apps-game-board-seat-l>
       </v-flex>
       <!-- 信息中心 -->
@@ -40,29 +43,24 @@
         <div><p>{{ news }}</p></div>
 
       </v-flex>
-      <v-flex xs4 v-else><br><br><br>
-      <!-- //TODO conditional display -->
-        <div v-show="msgs !== ''"><p>{{ msgs }}</p></div>
-      <br><br><br>
-        <app-player-timer
-          :seconds="seconds"
-        ></app-player-timer>
-      </v-flex>
+      <v-flex xs4 v-else><br><br><br><br><br></v-flex>
       <!-- 下联 & 下家 -->
       <v-flex xs4>
         <!-- 下联 -->
         <apps-game-board-seat-r
           :username="usernames[2]"
-          :cardsOut="cardsOut[2]"
-          :status="status[2]"
           :note="notes[2]"
+          :status="status[2]"
+          :cardsOut="cardsOut[2]"
+          :isOnAction="isOnAction[2]"
         ></apps-game-board-seat-r>
         <!-- 下家 -->
         <apps-game-board-seat-r
-            :username="usernames[1]"
-          :cardsOut="cardsOut[1]"
-          :status="status[1]"
+          :username="usernames[1]"
           :note="notes[1]"
+          :status="status[1]"
+          :cardsOut="cardsOut[1]"
+          :isOnAction="isOnAction[1]"
         ></apps-game-board-seat-r>
       </v-flex>
       <!-- 自己 -->
@@ -70,11 +68,12 @@
       <v-flex xs8>  
         <apps-game-board-seat-i
           :username="usernames[0]"
+          :note="notes[0]"
+          :status="status[0]"
           :cardsOnHand="cards"
           :cardsOnHandActiveIndex="cardsActiveIndex"
           :cardsOfHand="cardsOut[0]"
-          :status="status[0]"
-          :note="notes[0]"
+          :isOnAction="isOnAction[0]"
           @action-wait-ok="actionWaitOk()"
           @action-exec="actionExec()"
           @action-exec-ok="actionExecOk()"
@@ -82,6 +81,7 @@
           @action-cask="actionCask()"
           @action-cout="actionCout()"
           @action-card-activate="actionCardActivate($event)"
+          @action-time-up="actionTimeUp()"
         >
         <template slot="slot-player-selection">
           <v-select
@@ -95,7 +95,13 @@
         </template>
         </apps-game-board-seat-i>
       </v-flex>
-      <v-flex xs2></v-flex>
+      <v-flex xs2>
+        <br><br>
+        <apps-messager
+          :messages="msgs"
+        ></apps-messager>
+        <br><br>
+      </v-flex>
     </v-layout>
   </v-container>
 </template>
@@ -107,11 +113,11 @@
   // eslint-disable-next-line
   import { mapGetters, mapActions } from 'vuex'
 
-  import PlayerTimer from './GameBoard/GameBoardSeat/PlayerTimer'
   import GameBoardSeatI from './GameBoard/GameBoardSeatI'
   import GameBoardSeatL from './GameBoard/GameBoardSeatL'
   import GameBoardSeatO from './GameBoard/GameBoardSeatO'
   import GameBoardSeatR from './GameBoard/GameBoardSeatR'
+  import Messager from '@/components/Messager.vue'
 
   export default {
     name: 'apps-game-board',
@@ -120,7 +126,7 @@
       appsGameBoardSeatL: GameBoardSeatL,
       appsGameBoardSeatO: GameBoardSeatO,
       appsGameBoardSeatR: GameBoardSeatR,
-      appsPlayerTimer: PlayerTimer,
+      appsMessager: Messager,
     },
     props: {
 
@@ -155,9 +161,14 @@
         { name: '下联', id: 2 },
         { name: '弃四', id: 6 },
       ],
-      restartTimer: 20,
+      // actionTimer
+      isOnAction: [
+        false, false, false, false, false, false,
+      ],
       // msgs from client side to this user
-      msgs: '',
+      msgs: [
+
+      ],
       // news from server side to all users
       news: '',
     }),
@@ -177,21 +188,21 @@
       actionWaitOk () {
         this.$set(this.status, 0, 'waitOk')
         this.socket.emit('set-user-hand-wait-ok', {
-          username: this.user.name, seat: this.user.seat
+          name: this.user.name, seat: this.user.seat
         })
       },
       actionExec () {
         if (this.cardsActiveIndex.length > 0) {
           this.socket.emit('set-user-hand-exec', {
-            username: this.user.name, seat: this.user.seat,
+            name: this.user.name, seat: this.user.seat,
             id: (this.player.id + this.user.seat) % this.usernames.length,
-            cards: _.pullAt(this.cards, this.cardsActiveIndex)
+            cards: _.pullAt(this.cards, this.cardsActiveIndex),
+            cardsIndex: this.cardsActiveIndex
           })
           this.cardsActiveIndex = []
         }
       },
       actionExecOk () {
-        // TODO: send message on board
         // check user must one and only one 3
         if (_.filter(this.cards, {'rank': '3'}).length === 1) {
           this.player = {
@@ -199,44 +210,50 @@
           }
           this.$set(this.status, 0, 'execOk')
           this.socket.emit('set-user-hand-exec-ok', {
-            username: this.user.name, seat: this.user.seat
+            name: this.user.name, seat: this.user.seat
           })
         } else {
-          this.mgs = '想开打您必须有且只有一张3！'
+          this.msgs.concat(['-开打?您必须有且只有一张3！'])
         }
       },
       actionPass () {
-        console.log(
-          'user', this.user.name, 
-          'at seat', this.user.seat,
-          'action-pass', this.cardsActiveIndex,
-          'remember to reset activeCards to []'
-        )
+        this.socket.emit('set-user-hand-pass', {
+          name: this.user.name, seat: this.user.seat
+        })
       },
       actionCask () {
-        console.log('action cask')
+        let cardsOutIndex = _.findIndex(
+          this.cardsOut, (co) => { co !== [] }
+        )
+        if (cardsOutIndex === 3) {
+          this.socket.emit('set-user-hand-cask', {
+            name: this.user.name, seat: this.user.seat
+          })
+        }
       },
       actionCout () {
         if (this.cardsActiveIndex.length > 0) {
           let cardsOfHand = _.pullAt(this.cards, this.cardsActiveIndex)
           if (this.isCardsOutValid(cardsOfHand)) {
+            //TODO: add logic to check:
+            // if last cardsOut not from self, not 3, must beaten
+            // 3 must be last one
             this.cardsOut = [
               [], [], [], [], [], []
             ]
             this.$set(this.cardsOut, 0, cardsOfHand)
             this.socket.emit('set-user-hand-cout', {
-              username: this.user.name, seat: this.user.seat,
-              id: this.user.seat, cards: cardsOfHand,
+              name: this.user.name, seat: this.user.seat,
+              id: this.user.seat, cards: cardsOfHand, cardsIndex: this.cardsActiveIndex,
             })
             this.cardsActiveIndex = []
-            if (this.cards.length === 0) {
-              this.$set(this.status, 0, 'ende')
-              this.socket.emit('set-user-hand-ende', {
-                username: this.user.name, seat: this.user.seat,
-                id: this.user.seat, cards: [],
-              })
-            }
-            this.restartTimer = true
+            // if (this.cards.length === 0) {
+            //   this.$set(this.status, 0, 'ende')
+            //   this.socket.emit('set-user-hand-ende', {
+            //     name: this.user.name, seat: this.user.seat,
+            //     id: this.user.seat, cards: [],
+            //   })
+            // }
           } else {
             this.cards = _.sortBy(
               this.cards.concat(cardsOfHand), ['rnum', 'snum']
@@ -245,6 +262,10 @@
             this.msgs = '您这手牌打不出去啊！愣打出去我怕您被揍！'
           }
         }
+      },
+      actionTimeUp () {
+        console.log('action-time-up call action pass')
+        this.actionPass()
       },
       actionCardActivate (idx) {
         let index = this.cardsActiveIndex.indexOf(idx);
@@ -296,7 +317,6 @@
         ]
       })
       this.socket.on('srv-user-hand-exec', (payload) => {
-        console.log('srv-user-hand-exec', payload)
         if (this.user.seat === payload.id) {
           this.cards = _.sortBy(
             this.cards.concat(payload.cards), ['rnum', 'snum']
@@ -304,21 +324,39 @@
         }
       })
       // eslint-disable-next-line
-      this.socket.on('srv-plays-init', (payload) => {
+      this.socket.on('srv-hands-play', (payload) => {
         this.status = [
           'play', 'play', 'play', 'play', 'play', 'play'
         ]
+      })
+      this.socket.on('srv-hands-next', (payload) => {
+        this.isOnAction = [
+          false, false, false, false, false, false,
+        ]
+        let index = (payload.isOnActionIndex - this.user.seat + this.usernames.length) % this.isOnAction.length
+        this.$set(this.isOnAction, index, true)
+      })
+      // eslint-disable-next-line
+      this.socket.on('srv-user-hand-pass', (payload) => {
+
+      })
+      // eslint-disable-next-line
+      this.socket.on('srv-user-hand-cask', (payload) => {
+
       })
       this.socket.on('srv-user-hand-cout', (payload) => {
         this.cardsOut = [
           [], [], [], [], [], []
         ]
         let index = (payload.id - this.user.seat + this.usernames.length) % this.usernames.length
+
+        // TODO: if payload id === this.user.seat
+        // remove from cards ... (disconnect/men)
+
         this.$set(this.cardsOut, index, payload.cards)
       })
       this.socket.on('srv-user-hand-ende', (payload) => {
         let index = (payload.id - this.user.seat + this.usernames.length) % this.usernames.length
-        console.log('恭喜', this.usernames[index], '拿到x科')
         this.$set(this.status, index, 'ende')
       })
       this.socket.on('srv-hands-ende', (payload) => {
@@ -331,6 +369,13 @@
         this.status = [
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 
         ]
+      })
+      this.socket.on('srv-messages-addon', (payload) => {
+        this.msgs = this.msgs.concat(payload.msgs)
+      })
+      // eslint-disable-next-line
+      this.socket.on('srv-messages-clean', (payload) => {
+        this.msgs = []
       })
     },
     mounted () {
