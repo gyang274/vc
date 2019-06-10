@@ -3,9 +3,9 @@
     <v-flex xs12>
       <v-card
         :style="{
-          'background-color': 'rgb(63, 192, 63)'
+          'background-color': backgroundColor
         }"
-        height="26rem"
+        :height="height"
         class="scrollable"
       >
         <v-card-text>
@@ -25,24 +25,38 @@
 </template>
 
 <script>
+
+  // eslint-disable-next-line
+  import { mapGetters, mapActions } from 'vuex'
+
   export default {
     name: "Messager",
     props: {
-      messages: {
-        type: Array,
-        default: () => ([
-          
-        ])
+      backgroundColor: {
+        type: String,
+        default: 'rgb(255, 255, 232)',
       },
+      height: {
+        type: String,
+        default: '26rem',
+      }
     },
     data: () => ({
-
+      messages: []
     }),
     computed: {
-      
+      ...mapGetters({
+        socket: 'socket', user: 'user',
+      }),
     },
     created () {
-
+      this.socket.on('srv-messages-addon', (payload) => {
+        this.messages = this.messages.concat(payload.messages)
+      })
+      // eslint-disable-next-line
+      this.socket.on('srv-messages-clean', (payload) => {
+        this.messages = []
+      })
     },
     mounted () {
 

@@ -3,11 +3,11 @@
     <v-progress-circular
       :rotate="-90"
       :size="100"
-      :width="23"
+      :width="17"
       :value="value"
       color="primary"
     >
-      {{ secondsLeft }}
+      {{ secondsLeft - 1 }}
     </v-progress-circular>
   </div>    
 </template>
@@ -17,18 +17,21 @@
     props: {
       seconds: {
         type: Number,
-        default: 20,
+        default: 10,
       },
       isOnAction: {
         type: Boolean,
         default: false
       }
     },
-    data: () => ({
-      interval: {},
-      value: 0,
-      secondsLeft: 0
-    }),
+    data () {
+      return {
+        interval: {},
+        value: 0,
+        secondsLeft: 0,
+        startCountdown: this.isOnAction
+      }
+    },
     computed: {
       sencondsTick () {
         return 100 / Math.max(1, this.seconds)
@@ -39,15 +42,16 @@
     },
     mounted () {
       this.interval = setInterval(() => {
-        if (this.isOnAction) {
-          this.isOnAction = !this.isOnAction
-          this.secondsLeft = this.seconds
-        } else if (this.secondsLeft > 0) {
-          this.secondsLeft -= 1  
-        } else {
+        if (this.startCountdown) {
+          this.secondsLeft = this.seconds + 1
+          this.startCountdown = !this.startCountdown
+        } else if (this.secondsLeft > 1)  {
+          this.secondsLeft -= 1
+          this.value = this.secondsLeft * this.sencondsTick
+        } else if (this.secondsLeft === 1) {
+          this.secondsLeft -= 1
           this.$emit('action-time-up')
         }
-        this.value = this.secondsLeft * this.sencondsTick
       }, 1000)
     },
     beforeDestroy () {

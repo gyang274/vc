@@ -38,7 +38,9 @@
               <apps-player-hand></apps-player-hand>
             </v-flex> -->
             <v-flex xs12>
-              <apps-player-timer></apps-player-timer>
+              <apps-player-timer
+                :isOnAction="true"
+              ></apps-player-timer>
             </v-flex>
           </v-layout>
         </v-slide-y-transition>

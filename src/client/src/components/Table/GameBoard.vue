@@ -98,7 +98,7 @@
       <v-flex xs2>
         <br><br>
         <apps-messager
-          :messages="msgs"
+          :backgroundColor="'rgb(63, 192, 63)'"
         ></apps-messager>
         <br><br>
       </v-flex>
@@ -113,20 +113,21 @@
   // eslint-disable-next-line
   import { mapGetters, mapActions } from 'vuex'
 
+  import Messager from '@/components/Messager.vue'
+
   import GameBoardSeatI from './GameBoard/GameBoardSeatI'
   import GameBoardSeatL from './GameBoard/GameBoardSeatL'
   import GameBoardSeatO from './GameBoard/GameBoardSeatO'
   import GameBoardSeatR from './GameBoard/GameBoardSeatR'
-  import Messager from '@/components/Messager.vue'
-
+  
   export default {
     name: 'apps-game-board',
     components: {
+      appsMessager: Messager,
       appsGameBoardSeatI: GameBoardSeatI,
       appsGameBoardSeatL: GameBoardSeatL,
       appsGameBoardSeatO: GameBoardSeatO,
       appsGameBoardSeatR: GameBoardSeatR,
-      appsMessager: Messager,
     },
     props: {
 
@@ -165,11 +166,7 @@
       isOnAction: [
         false, false, false, false, false, false,
       ],
-      // msgs from client side to this user
-      msgs: [
-
-      ],
-      // news from server side to all users
+      // GameResults
       news: '',
     }),
     computed: {
@@ -259,7 +256,7 @@
               this.cards.concat(cardsOfHand), ['rnum', 'snum']
             )
             // TODO: transient message
-            this.msgs = '您这手牌打不出去啊！愣打出去我怕您被揍！'
+            this.msgs += ['您这手牌打不出去啊！愣打出去我怕您被揍！']
           }
         }
       },
@@ -330,10 +327,11 @@
         ]
       })
       this.socket.on('srv-hands-next', (payload) => {
+        console.log('srv-hand-next', payload.id)
         this.isOnAction = [
           false, false, false, false, false, false,
         ]
-        let index = (payload.isOnActionIndex - this.user.seat + this.usernames.length) % this.isOnAction.length
+        let index = (payload.id - this.user.seat + this.usernames.length) % this.isOnAction.length
         this.$set(this.isOnAction, index, true)
       })
       // eslint-disable-next-line
@@ -369,13 +367,6 @@
         this.status = [
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 
         ]
-      })
-      this.socket.on('srv-messages-addon', (payload) => {
-        this.msgs = this.msgs.concat(payload.msgs)
-      })
-      // eslint-disable-next-line
-      this.socket.on('srv-messages-clean', (payload) => {
-        this.msgs = []
       })
     },
     mounted () {

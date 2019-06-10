@@ -105,7 +105,8 @@ function setCards () {
 //   set a table of 6 player notes on games
 function setNotes () {
 
-  // notes: status: <'none'> -> 'play'/'pass'/'cask'/'cout'/'give'/'ende'
+  // notes: 
+  //  status: <'none'> -> 'play'/'feng'/'cout'/'cask'/'pass'/'give'/'ende'
   let notes = {
     cardsInit: [
 
@@ -331,13 +332,13 @@ function cardsToString (cards) {
 
 function cardsSuitToString (suit) {
   if (suit === 'C') {
-    return '梅花'
+    return '权杖'
   } else if (suit === 'D') {
     return '钻石'
   } else if (suit === 'H') {
-    return '红桃'
+    return '红心'
   } else if (suit === 'S') {
-    return '黑桃'
+    return '铲子'
   } else {
     return ''
   }
