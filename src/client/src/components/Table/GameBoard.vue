@@ -102,6 +102,38 @@
         ></apps-messager>
         <br><br>
       </v-flex>
+      <!-- 本地提示信息 -->
+      <v-flex xs12>
+        <div class="text-xs-center">
+          <v-dialog
+            v-model="showMsgs"
+            width="1024"
+          >
+            <v-card>
+              <v-card-title
+                class="headline grey lighten-2"
+                primary-title
+              >
+                友情提示
+              </v-card-title>
+              <v-card-text>
+                {{ msgs }}
+              </v-card-text>
+              <v-divider></v-divider>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn
+                  color="primary"
+                  flat
+                  @click="showMsgs = false"
+                >
+                  受教了！
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </div>
+      </v-flex>
     </v-layout>
   </v-container>
 </template>
@@ -168,6 +200,9 @@
       ],
       // GameResults
       news: '',
+      // LocalMessages
+      msgs: '',
+      showMsgs: false,
     }),
     computed: {
       ...mapGetters({
@@ -201,16 +236,18 @@
       },
       actionExecOk () {
         // check user must one and only one 3
-        if (_.filter(this.cards, {'rank': '3'}).length === 1) {
-          this.player = {
-            name: '对家', id: 3
-          }
+        if (_.filter(this.cards, {rank: '3'}).length === 1) {
           this.$set(this.status, 0, 'execOk')
           this.socket.emit('set-user-hand-exec-ok', {
             name: this.user.name, seat: this.user.seat
           })
+          // reset player
+          this.player = {
+            name: '对家', id: 3
+          }
         } else {
-          this.msgs.concat(['-开打?您必须有且只有一张3！'])
+          this.msgs = '-开打?您必须有且只有一张3！'
+          this.showMsgs = true
         }
       },
       actionPass () {

@@ -20,8 +20,8 @@
             block 
             class="primary white--text"
             @click.native="actionExec()"
-            :disabled="status === 'execOk'"
           >
+          <!-- :disabled="status === 'execOk'" -->
             买3/买4/贡牌
           </v-btn>
         </v-flex>

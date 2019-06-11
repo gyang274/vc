@@ -174,8 +174,6 @@ io.on('connection', (socket) => {
       'srv-user-hand-exec', payload
     )
 
-    console.log('set-user-hand-exec|cards before:', cards[payload.seat], cards[payload.id])
-
     // track the exec in cards
     _.pullAt(cards[payload.seat], payload.cardsIndex)
     
@@ -187,8 +185,6 @@ io.on('connection', (socket) => {
         cards[payload.id].concat(payload.cards), ['rnum', 'snum']
       )
     }
-
-    console.log('set-user-hand-exec|cards after:', cards[payload.seat], cards[payload.id])
     
     // track the exec nodes
     notes.cardsExec.push(
@@ -196,14 +192,14 @@ io.on('connection', (socket) => {
     )
 
     // io.emit the exec message
-    message = ''
-    if (payload.id < seats.length) {
-      message = ':' + seats[payload.seat].name + '给了' + seats[payload.id].name + core.cardsToString(payload.cards)
+    let message = ''
+    if (payload.id === payload.seat) {
+      message = ':' + seats[payload.seat].name + '弃了' + core.cardsToString(payload.cards)
     } else {
-      message = ':' + seats[payload.seat].name + '弃了' + core.cardsToString(payload.cards)    
+      message = ':' + seats[payload.seat].name + '给了' + seats[payload.id].name + core.cardsToString(payload.cards)
     }
-
     io.emit('srv-messages-addon', { messages: [ message ] })
+    console.log('set-user-hand-exec', message)
 
   })
 
@@ -218,11 +214,13 @@ io.on('connection', (socket) => {
 
     socket.broadcast.emit('srv-user-hand-exec-ok', payload)
 
+    let message = ':' + payload.name + '迫不及待要开打了！'
     io.emit(
       'srv-messages-addon', { 
-        messages: [ ':' + payload.name + '迫不及待要开打了！' ] 
+        messages: [ message ] 
       }
     )
+    console.log('set-user-hand-exec-ok', message)
 
     if (_(seats).map('status').every(v => v === 'execOk')) {
 
@@ -232,17 +230,19 @@ io.on('connection', (socket) => {
         notes.asksId = _.random(0, 5)
       }
       
-      console.log('set-user-hand-exec-ok -> srv-hands-play|cards:', cards)
+      // console.log('set-user-hand-exec-ok -> srv-hands-play|cards:', cards)
 
       io.emit('srv-hands-play')
 
+      io.emit('srv-hands-next', { id: notes.asksId })
+
+      message = [':' + '开打！', ':' + seats[notes.asksId].name + '先出！']
       io.emit(
         'srv-messages-addon', { 
-          messages: [ ':' + '开打！', ':' + seats[notes.asksId].name + '先出！'] 
+          messages: [ ...message ]
         }
       )
-
-      io.emit('srv-hands-next', { id: notes.asksId })
+      console.log('set-user-hand-exec-ok', message)
 
     }
 
@@ -285,6 +285,8 @@ io.on('connection', (socket) => {
 
     // check core.isCardsOutValid on client side
     // check core.isCardsOutBeatenPrevCardsOut on client side
+
+    console.log('set-user-hand-cout', payload)
 
     socket.broadcast.emit(
       'srv-user-hand-cout', payload 

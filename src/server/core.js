@@ -209,7 +209,7 @@ function isCardsOutGoJi4Kd (cardsOut) {
 // check cardsOut is 3, assume cardsOut is valid
 function isCardsOut3d (cardsOut) {
 
-  return cardsOut[0].rank === '4'
+  return cardsOut[0].rank === '3'
 
 }
 
