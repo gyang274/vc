@@ -1,6 +1,8 @@
 // core.js
 // author: <yg@gyang274@github.com>
 
+const fs = require('fs')
+
 const _ = require('lodash')
 
 
@@ -108,6 +110,9 @@ function setNotes () {
   // notes: 
   //  status: <'none'> -> 'play'/'feng'/'cout'/'cask'/'pass'/'give'/'ende'
   let notes = {
+    names: [
+
+    ],
     cardsInit: [
 
     ],
@@ -354,10 +359,25 @@ function cardsRankToString (rank) {
   }
 }
 
+function writeNotes (notes) {
+
+  let data = JSON.stringify(student, null, 2);
+
+  // TODO timestamp - need some random number 
+  fs.writeFile('notes-' + (new Date()).toISOString + '.json', data, (err) => {  
+      if (err) throw err;
+      console.log('Data written to file');
+  });
+
+}
 
 // module.exports
 module.exports = {
-  setDeck, setCards, setNotes, resNotes,
+  setDeck, 
+  setCards, 
+  setNotes, 
+  resNotes, 
+  writeNotes,
   isCardsOutValid,
   isCardsOutGoJi,
   isCardsOutGoJi4Kd,

@@ -536,6 +536,8 @@ function seatsHandsEndeProcess (io, socket, payload) {
     // TODO: (in core) stats from notes on dsml
     payload.news = core.resNotes(notes)
 
+    core.writeNotes(notes)
+
     io.emit('srv-hands-ende', payload)
 
   }
