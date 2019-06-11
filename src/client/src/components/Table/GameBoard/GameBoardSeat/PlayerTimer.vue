@@ -7,7 +7,7 @@
       :value="value"
       color="primary"
     >
-      {{ secondsLeft - 1 }}
+      {{ secondsLeft }}
     </v-progress-circular>
   </div>    
 </template>
