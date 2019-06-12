@@ -37,7 +37,7 @@ let cardsOut = []
 
 let notes = core.setNotes()
 
-let initId = -1
+let asksId = -1
 
 
 io.on('connection', (socket) => {
@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
   socket.on('set-user-hand-wait-ok', (payload) => {
 
     // seats[socket.user.seat].status = 'waitOk'
-    seats[payload.seat].status = 'waitOk'
+    seats[payload.id].status = 'waitOk'
 
     socket.broadcast.emit('srv-user-hand-wait-ok', payload)
 
@@ -156,6 +156,8 @@ io.on('connection', (socket) => {
       cards = core.setCards()
 
       notes = core.setNotes()
+
+      notes.names = _.map(seats, 'name')
 
       notes.cardsInit = cards
 
@@ -175,28 +177,28 @@ io.on('connection', (socket) => {
     )
 
     // track the exec in cards
-    _.pullAt(cards[payload.seat], payload.cardsIndex)
+    _.pullAt(cards[payload.id], payload.cardsIndex)
     
-    if (payload.id === payload.seat) {
+    if (payload.jd === payload.id) {
       // exec cards to deadwood
     } else {
       // exec cards to someones
-      cards[payload.id] = _.sortBy(
-        cards[payload.id].concat(payload.cards), ['rnum', 'snum']
+      cards[payload.jd] = _.sortBy(
+        cards[payload.jd].concat(payload.cards), ['rnum', 'snum']
       )
     }
     
     // track the exec nodes
     notes.cardsExec.push(
-      { src: payload.seat, dst: payload.id, cards: payload.cards }
+      { src: payload.id, dst: payload.jd, cards: payload.cards }
     )
 
     // io.emit the exec message
     let message = ''
-    if (payload.id === payload.seat) {
-      message = ':' + seats[payload.seat].name + '弃了' + core.cardsToString(payload.cards)
+    if (payload.id === payload.jd) {
+      message = ':' + seats[payload.id].name + '弃了' + core.cardsToString(payload.cards)
     } else {
-      message = ':' + seats[payload.seat].name + '给了' + seats[payload.id].name + core.cardsToString(payload.cards)
+      message = ':' + seats[payload.id].name + '给了' + seats[payload.jd].name + core.cardsToString(payload.cards)
     }
     io.emit('srv-messages-addon', { messages: [ message ] })
     console.log('set-user-hand-exec', message)
@@ -224,19 +226,17 @@ io.on('connection', (socket) => {
 
     if (_(seats).map('status').every(v => v === 'execOk')) {
 
-      if (initId >= 0 && initId <= 5) {
-        notes.asksId = initId
-      } else {
-        notes.asksId = _.random(0, 5)
-      }
+      if (asksId === -1) { asksId = _.random(0, 5) }
       
       // console.log('set-user-hand-exec-ok -> srv-hands-play|cards:', cards)
 
+      // seats.forEach((seat) => { seat.status = 'play' })
+
       io.emit('srv-hands-play')
 
-      io.emit('srv-hands-next', { id: notes.asksId })
+      io.emit('srv-hands-next', { id: asksId })
 
-      message = [':' + '开打！', ':' + seats[notes.asksId].name + '先出！']
+      message = [':' + '开打！', ':' + seats[asksId].name + '先出！']
       io.emit(
         'srv-messages-addon', { 
           messages: [ ...message ]
@@ -251,33 +251,27 @@ io.on('connection', (socket) => {
   // set user hand pass
   socket.on('set-user-hand-pass', (payload) => {
 
-    console.log('set-user-hand-pass|before:', payload, notes.status)
+    console.log('set-user-hand-pass|init:', notes.status)
 
-    if (notes.status[payload.seat] === 'pass'
-     || notes.status[payload.seat] === 'give') {
-      notes.status[payload.seat] = 'give'
-    } else {
-      notes.status[payload.seat] = 'pass'
-    }
+    asksId = core.setHandNextPass(notes, payload)
 
-    for (let i = 1; i < 6; i++) {
-      notes.asksId = (payload.seat + i) % 6
-      console.log('askid:', i, notes.asksId)
-      if (!['pass', 'give', 'ende'].includes(notes.status[notes.asksId])) {
-        io.emit('srv-hands-next', { id: notes.asksId })
-        break
-      }
-    }
+    io.emit('srv-hands-next', { id: asksId })
 
-    console.log('set-user-hand-pass|after:', notes.asksId, notes.status)
+    console.log('set-user-hand-pass|after:', notes.status)
 
   })
 
   // set user hand cask
   socket.on('set-user-hand-cask', (payload) => {
-    socket.broadcast.emit(
-      'srv-user-hand-cask', payload
-    )
+    
+    console.log('set-user-hand-cask|init:', notes.status)
+
+    asksId = core.setHandNextCask(notes, payload)
+
+    io.emit('srv-hands-next', { id: asksId })
+
+    console.log('set-user-hand-cask|after:', notes.status)
+
   })
 
   // set-user-hand-cout
@@ -286,6 +280,8 @@ io.on('connection', (socket) => {
     // check core.isCardsOutValid on client side
     // check core.isCardsOutBeatenPrevCardsOut on client side
 
+    console.log('set-user-hand-cout|init status:', notes.status)
+
     console.log('set-user-hand-cout', payload)
 
     socket.broadcast.emit(
@@ -293,76 +289,115 @@ io.on('connection', (socket) => {
     )
 
     // track cout in cards
-    cards[payload.seat] = _.sortBy(
-      _.pullAt(cards[payload.seat], payload.cardsIndex), ['rnum', 'snum']
+    cards[payload.id] = _.sortBy(
+      _.pullAt(cards[payload.id], payload.cardsIndex), ['rnum', 'snum']
     )
 
     // track cout in notes
     if (notes.hands.length >= 1) {
       notes.prevHand = notes.currHand
-      notes.status[notes.prevHand.seat] = 'play'
+      notes.status[notes.prevHand.id] = 'play'
     }
 
     notes.currHand = {
-      name: payload.name, seat: payload.seat, cards: payload.cards
+      id: payload.id, name: payload.name, cards: payload.cards
     }
-    notes.status[notes.currHand.seat] = 'cout'
+    notes.status[notes.currHand.id] = 'cout'
 
     notes.hands.push(notes.currHand)
 
     // 判断 点 闷 烧 落
-    // 4 -> 判断开点
-    if (notes.numAck === 6 && core.isCardsOut4d(payload.cards)) {
+    // 判断开点
+    if (core.isHandDian(notes, payload)) {
+      notes.dian[payload.id] = true
+      io.emit(
+        'srv-messages-addon', {
+          messages: [ ':' + payload.name + '开点！' ]
+        }
+      )
+    }
 
-      // corner case: user play 4 directly on 1st action
-      if (!_.isEmpty(notes.prevHand) 
-        && notes.prevHand.seat === payload.seat 
-        && core.isCardsOutGoJi4Kd(notes.prevHand.cards)
-      ) {
-        notes.dian.push(payload.seat)
-        io.emit(
-          'srv-messages-addon', {
-            messages: [ ':' + '恭喜' + payload.name + '开点' ] 
-          }
-        )
+    // 判断烧人
+    // must determine shaoBkUp before shaoInit
+    //  because of reverse shao (反烧/烧烧)
+    if (core.isHandShaoEnde(notes, payload)) {
+
+      notes.shao[0].on = false
+
+      io.emit(
+        'srv-message-addon', {
+          messages: [ ':' + notes.shao[0].src + '烧了' + notes.shao[0].dst + '！' ]
+        }
+      )
+
+    }
+
+    if (core.isHandShaoBkUp(notes, payload)) {
+
+      io.emit(
+        'srv-message-addon', {
+          messages: [ ':' + payload.name + '解烧' + notes.shao[0].src + '！' ]
+        }
+      )
+      
+      _.pullAt(notes.shao, 0)
+
+
+    }
+
+    if (core.isHandShaoGoOn(notes, payload)) {
+
+    }
+
+    if (core.isHandShaoInit(notes, payload)) {
+
+      notes.shao.unshift(
+        { src: payload.id, dst: notes.prevHand.id, on: true}
+      )
+
+      io.emit(
+        'srv-message-addon', {
+          messages: [ ':' + notes.shao[0].src + '要烧' + notes.shao[0].dst + '！' ]
+        }
+      )
+
+    }
+
+    // 判断闷人
+    if (core.isHandMens(notes, payload, cards)) {
+      notes.mens.push({
+        src: payload.id, dst: notes.prevHand.id
+      })
+      io.emit(
+        'srv-messages-addon', {
+          messages: [ ':' + payload.name + '闷了' + notes.prevHand.name ] 
+        }
+      )
+      io.emit(
+        'srv-user-hand-show', {
+          id: notes.prevHand.id, cards: cards[notes.prevHand.id], cardsIndex: 0
+        }
+      )
+      cards[notes.prevHand.id] = []
+      for (let i = 5; i > -1; i--) {
+        if (_.isUndefined(notes.lake.indexOf(i))) {
+          notes.lake[notes.prevHand.id] = i
+        }          
       }
-
+      notes.numAck -= 1
+      seatsHandsEndeProcess(io, socket, {
+        id: notes.prevHand.id, name: notes.prevHand.name
+      })  
     }
     
-    // 判断闷人
-    if (!_.isEmpty(notes.prevHand)) {
-      if (cards[notes.prevHand.seat].length === 1
-       && notes.prevHand.seat !== (payload.seat + 3) % 6
-       && notes.prevHand.seat !== payload.seat
-      ) {
-        notes.mens.push({
-          src: payload.seat, dst: notes.prevHand.seat
-        })
-        io.emit(
-          'srv-messages-addon', {
-            messages: [ ':' + payload.name + '闷了' + notes.prevHand.name ] 
-          }
-        )
-        io.emit('srv-user-hand-cout', {
-          id: notes.prevHand.seat, cards: cards[notes.prevHand.seat], cardsIndex: 0
-        })
-        cards[notes.prevHand.seat] = []
-        for (let i = 5; i > -1; i--) {
-          if (_.isUndefined(notes.lake.indexOf(i))) {
-            notes.lake[notes.prevHand.seat] = i
-          }          
-        }
-        notes.numAck -= 1
-        seatsHandsEndeProcess(io, socket, payload)  
-      }
-    }
-
-    // 够级 -> 判断烧人 TODO
-
-    // 3 -> 判断科落 判断牌局结束
+    // 判断科落 -> 判断牌局结束
     if (core.isCardsOut3d(payload.cards)) {
 
-      notes.lake[payload.seat] = 6 - notes.numAck
+      for (let i = 0; i < 6; i++) {
+        if (_.isUndefined(notes.lake.indexOf(i))) {
+          notes.lake[payload.id] = i
+        }
+      }
 
       notes.numAck -= 1
 
@@ -370,66 +405,14 @@ io.on('connection', (socket) => {
   
     }
 
-    // Go Next AsksId
-    if (notes.numAck > 4) {
+    // Go Next with asksId
+    asksId = core.setHandNextCout(notes, payload)
+    
+    io.emit('srv-hands-next', { id: asksId })
 
-      if (notes.prevHand.seat === payload.seat) {
-        notes.status.forEach(
-          (s, i, a) => { if (s !== 'ende') { a[i] = 'play' } }
-        )
-      }
-      
-      if (core.isCardsOutGoJi(payload.cards)) {
-
-        // 5-6人 && 够级 -> 对家 || 无头 (下家, 上家)
-        notes.asksId = (payload.seat + 3) % 6
-
-        if (notes.status[notes.asksId] === 'ende') {
-          notes.asksId = (payload.seat + 1) % 6
-          if (notes.status[notes.asksId] === 'give') {
-            notes.asksId = (payload.seat + 5) % 6
-            if (notes.status[notes.asksId] === 'give') {
-              notes.asksId = payload.seat
-            }
-          }
-        } else if (notes.status[notes.asksId] === 'give') {
-          notes.asksId = payload.seat
-        }
-
-      } else {
-
-        // 5-6人 不打够级 -> 跳过pass/ende 顺位依次 对家双重give确认
-        let doubleAsksSeatO = true
-        for (let i = 1; i < 6; i++) {
-          notes.asksId = (payload.seat + i) % 6
-          if (!['pass', 'give', 'ende'].includes(notes.status[notes.asksId])) {
-            doubleAsksSeatO = false
-            break
-          }
-        }
-        if (doubleAsksSeatO) {
-          notes.asksId = (payload.seat + 3) % 6
-          if (notes.status[notes.asksId] === 'give'
-           || notes.status[notes.asksId] === 'ende'
-          ) {
-            notes.asksId = payload.seat
-          }
-        }
-
-      }
-
-    } else {
-
-      // 2-4人 || 不打够级 -> 顺位依次
-      notes.asksId = (payload.seat + 1) % 6
-
-    }
-
-    io.emit('srv-hands-next', { id: notes.asksId })
+    console.log('set-user-hand-cout|ende status:', notes.status)
 
   })
-
-
 
 
   socket.on('set-user-hand-ende', (payload) => {
@@ -480,11 +463,13 @@ io.on('connection', (socket) => {
 
 function seatsHandsEndeProcess (io, socket, payload) {
 
-  seats[payload.seat].status = 'ende'
+  seats[payload.id].status = 'ende'
+
+  notes.status[payload.id] = 'ende'
 
   io.emit(
     'srv-user-hand-ende', {
-      'id': payload.seat, cards: [],
+      'id': payload.id, cards: [],
     }
   )
 
@@ -493,7 +478,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
       messages: [ 
         ':' + '恭喜' + payload.name + '拿到' + [
           '头科', '二科', '三科', '四科', '二落', '大落'
-        ][notes.lake[payload.seat]]
+        ][notes.lake[payload.id]]
       ]
     }
   )
@@ -511,15 +496,15 @@ function seatsHandsEndeProcess (io, socket, payload) {
     }
     let idx = -1
     for (let i = 0; i < 6; i++) {
-      idx = (payload.seat + i) % 6 
+      idx = (payload.id + i) % 6 
       if (!_.isEmpty(cards[idx])) {
         for (let j = 0; j < 6; j++) {
           if (_.isUndefined(notes.lake.indexOf(i))) {
             notes.lake[idx] = j
           }
         }
-        notes.numAck -= 1
         cards[idx] = []
+        notes.numAck -= 1
       }
     }
     
@@ -536,7 +521,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
     // TODO: (in core) stats from notes on dsml
     payload.news = core.resNotes(notes)
 
-    core.writeNotes(notes)
+    // core.writeNotes(notes)
 
     io.emit('srv-hands-ende', payload)
 

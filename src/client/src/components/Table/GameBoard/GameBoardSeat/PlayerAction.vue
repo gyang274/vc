@@ -43,7 +43,7 @@
           <v-btn 
             block 
             class="primary white--text"
-            :disabled="status === 'ende'"
+            :disabled="!isOnAction || status === 'ende'"
             @click.native="actionPass()"
           >
             过牌
@@ -53,7 +53,7 @@
           <v-btn 
             block 
             class="primary white--text"
-            :disabled="status === 'ende'"
+            :disabled="!isOnAction || status === 'ende'"
             @click.native="actionCask()"
           >
             让牌
@@ -83,7 +83,11 @@
     props: {
       status: {
         type: String,
-        default: 'play'
+        default: 'play',
+      },
+      isOnAction: {
+        type: Boolean,
+        default: false,
       },
     },
     data: () => ({

@@ -106,7 +106,7 @@
       <v-flex xs12>
         <div class="text-xs-center">
           <v-dialog
-            v-model="showMsgs"
+            v-model="msgsShow"
             width="1024"
           >
             <v-card>
@@ -125,7 +125,7 @@
                 <v-btn
                   color="primary"
                   flat
-                  @click="showMsgs = false"
+                  @click="msgsShow = false"
                 >
                   受教了！
                 </v-btn>
@@ -202,7 +202,7 @@
       news: '',
       // LocalMessages
       msgs: '',
-      showMsgs: false,
+      msgsShow: false,
     }),
     computed: {
       ...mapGetters({
@@ -220,14 +220,14 @@
       actionWaitOk () {
         this.$set(this.status, 0, 'waitOk')
         this.socket.emit('set-user-hand-wait-ok', {
-          name: this.user.name, seat: this.user.seat
+          id: this.user.seat, name: this.user.name
         })
       },
       actionExec () {
         if (this.cardsActiveIndex.length > 0) {
           this.socket.emit('set-user-hand-exec', {
-            name: this.user.name, seat: this.user.seat,
-            id: (this.player.id + this.user.seat) % this.usernames.length,
+            id: this.user.seat, name: this.user.name, 
+            jd: (this.player.id + this.user.seat) % this.usernames.length,
             cards: _.pullAt(this.cards, this.cardsActiveIndex),
             cardsIndex: this.cardsActiveIndex
           })
@@ -239,7 +239,7 @@
         if (_.filter(this.cards, {rank: '3'}).length === 1) {
           this.$set(this.status, 0, 'execOk')
           this.socket.emit('set-user-hand-exec-ok', {
-            name: this.user.name, seat: this.user.seat
+            id: this.user.seat, name: this.user.name,
           })
           // reset player
           this.player = {
@@ -247,12 +247,12 @@
           }
         } else {
           this.msgs = '-开打?您必须有且只有一张3！'
-          this.showMsgs = true
+          this.msgsShow = true
         }
       },
       actionPass () {
         this.socket.emit('set-user-hand-pass', {
-          name: this.user.name, seat: this.user.seat
+          id: this.user.seat, name: this.user.name,
         })
       },
       actionCask () {
@@ -261,8 +261,11 @@
         )
         if (cardsOutIndex === 3) {
           this.socket.emit('set-user-hand-cask', {
-            name: this.user.name, seat: this.user.seat
+            id: this.user.seat, name: this.user.name,
           })
+        } else {
+          this.msgs = '-让牌?只能让对家的牌！'
+          this.msgsShow = true
         }
       },
       actionCout () {
@@ -277,8 +280,8 @@
             ]
             this.$set(this.cardsOut, 0, cardsOfHand)
             this.socket.emit('set-user-hand-cout', {
-              name: this.user.name, seat: this.user.seat,
-              id: this.user.seat, cards: cardsOfHand, cardsIndex: this.cardsActiveIndex,
+              id: this.user.seat, name: this.user.name, 
+              cards: cardsOfHand, cardsIndex: this.cardsActiveIndex,
             })
             this.cardsActiveIndex = []
             // if (this.cards.length === 0) {
@@ -293,7 +296,7 @@
               this.cards.concat(cardsOfHand), ['rnum', 'snum']
             )
             // TODO: transient message
-            this.msgs += ['您这手牌打不出去啊！愣打出去我怕您被揍！']
+            this.msgs += ['您这手牌打不出去啊！愣打您会被揍的！']
           }
         }
       },

@@ -33,6 +33,7 @@
     <v-flex xs6>
       <apps-player-action
         :status="status"
+        :isOnAction="isOnAction"
         @action-wait-ok="actionWaitOk()"
         @action-exec="actionExec()"
         @action-exec-ok="actionExecOk()"

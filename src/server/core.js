@@ -225,6 +225,16 @@ function isCardsOut4d (cardsOut) {
 
 }
 
+// check cardsOut has T0, T1, assume cardsOut is valid
+function isCardsOutTd (cardsOut) {
+
+  let numCardsByRank = _.countBy(cardsOut, 'rank')
+
+  let ranks = Object.keys(numCardsByRank)
+
+  return ranks.includes('0') || ranks.includes('1')
+
+}
 
 // check cardsOut can beat previous cardsOut, assume cardsOut is valid
 function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
@@ -291,10 +301,215 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
 }
 
 
-function resNotes (notes) {
-  // TODO: give suggestions on mai3/mai4/gong from notes
-  return ':素质游戏，自觉进贡，静待服务器升级！'
+// isHandDian
+function isHandDian (notes, payload) {
+
+  // corner case: user play 4 on 1st action directly
+  return notes.numAck === 6 
+      && core.isCardsOut4d(payload.cards)
+      && !_.isEmpty(notes.prevHand) 
+      && notes.prevHand.id === payload.id 
+      && core.isCardsOutGoJi4Kd(notes.prevHand.cards)
+
 }
+
+// isHandMens
+function isHandMens (notes, payload, cards) {
+
+  return !_.isEmpty(notes.prevHand)
+      && cards[notes.prevHand.id].length === 1
+      && notes.prevHand.id !== payload.id
+      && notes.prevHand.id !== (payload.id + 3) % 6
+      
+}
+
+// isHandShao
+function isHandShaoInit (notes, payload) {
+
+  return notes.numAck >= 5
+      && !_.isEmpty(notes.prevHand)
+      && isCardsOutGoJi(notes.prevHand.cards)
+      && notes.prevHand.id !== payload.id
+      && notes.prevHand.id !== (payload.id + 3) % 6
+      && notes.status[(payload.id + 3) % 6] !== 'ende'
+      && notes.status[(notes.prevHand.id + 3) % 6] !== 'ende'
+      
+}
+
+function isHandShaoGoOn (notes, payload) {
+  return !_.isEmpty(notes.shao)
+      && notes.shao[0].on
+      && notes.shao[0].src === payload.id
+      && isCardsOutTd(payload.cards)
+}
+
+function isHandShaoBkUp (notes, payload) {
+  return !_.isEmpty(notes.shao)
+      && notes.shao[0].on
+      && notes.shao[0].src !== payload.id
+}
+
+function isHandShaoEnde (notes, payload) {
+  return !_.isEmpty(notes.shao)
+      && notes.shao[0].on
+      && notes.shao[0].src === payload.id
+      && isCardsOut3d(payload.cards)
+}
+
+
+
+// setHandNextCask
+function setHandNextCask (notes, payload) {
+
+  notes.status[payload.id] = 'cask'
+
+  let asksId = -1
+  for (let i = 1; i < 3; i++) {
+    if (notes.status[asksId] === 'play') {
+      break
+    }
+  }
+  if (asksId === -1) {
+    asksId = payload.id
+  }
+
+  return asksId
+
+}
+
+// setHandNextPass
+function setHandNextPass (notes, payload) {
+
+  let asksId = -1
+
+  // 对家双过
+  //  5人 上家双过或者下家双过 无头过来的
+  if (notes.status[payload.id] === 'cask'
+   || notes.status[payload.id] === 'pass') {
+    dist = (payload.id - notes.currHand.id + 6) % 6
+    if (dist === 1) {
+      asksId = (payload.id + 4) % 6
+    } else if (dist === 5) {
+      asksId = notes.currHand.id
+    }
+
+    asksId = (payload.id + 3) % 6
+    if (notes.status[asksId] === 'cout') {
+
+    } else {
+
+      asksId = (payload.id + 2) % 6
+
+    }
+    
+  }
+
+  
+  if (notes.status[payload.id] === 'play') {
+    notes.status[payload.id] = 'pass'
+    if (isCardsOutGoJi(notes.currHand.cards)) {
+      asksId = notes.currHand.id
+    } else {
+      for (let i = 1; i < 6; i++) {
+        asksId = (payload.id + i) % 6
+        if (notes.status[asksId] === 'play') {
+          break
+        } else if (notes.status[asksId] === 'cout') {
+          if (notes.status[(asksId + 3) % 6] === 'cask') {
+            // 让牌优先
+            askId = (asksId + 3) % 6
+            break
+          } else {
+            break
+          }
+        }
+      }
+    }
+  } 
+  
+  if (asksId === -1) {
+    console.log('setHandNextPass|sth. wrong?', notes, payload)
+  }
+
+  return asksId
+
+}
+
+// setHandNextCout
+function setHandNextCout (notes, payload) {
+
+  let asksId = -1
+
+  if (notes.numAck > 4) {
+
+    if (notes.prevHand.id === payload.id) {
+      notes.status.forEach(
+        (s, i, a) => { if (s !== 'ende') { a[i] = 'play' } }
+      )
+    }
+    
+    if (isCardsOutGoJi(payload.cards)) {
+
+      // 5-6人 && 够级 -> 对家 || 无头 (下家, 上家)
+      asksId = (payload.id + 3) % 6
+
+      if (notes.status[asksId] === 'ende') {
+        asksId = (payload.id + 1) % 6
+        if (notes.status[asksId] === 'give') {
+          asksId = (payload.id + 5) % 6
+          if (notes.status[asksId] === 'give') {
+            asksId = payload.id
+          }
+        }
+      }
+      
+      if (notes.status[asksId] === 'give') {
+        asksId = payload.id
+      }
+
+    } else {
+
+      // 5-6人 不打够级 -> 跳过pass/ende 顺位依次 对家双重give确认
+      let doubleAsksSeatO = true
+      for (let i = 1; i < 6; i++) {
+        asksId = (payload.id + i) % 6
+        if (!['pass', 'give', 'ende'].includes(notes.status[asksId])) {
+          doubleAsksSeatO = false
+          break
+        }
+      }
+      if (doubleAsksSeatO) {
+        asksId = (payload.id + 3) % 6
+        if (notes.status[asksId] === 'give'
+         || notes.status[asksId] === 'ende'
+        ) {
+          asksId = payload.id
+        }
+      }
+
+    }
+
+  } else {
+
+    // 2-4人 -> 顺位依次
+    for (let i = 1; i < 6; i++) {
+      asksId = (payload.id + 1) % 6
+      if (notes.status[asksId] !== 'ende') {
+        break
+      }
+    }
+  
+  }
+
+  if (asksId === -1) {
+    console.log('setHandNextCout|sth. wrong?', notes, payload)
+  }
+
+  return asksId
+
+}
+
+
 
 // isHandEnde
 // inputs:
@@ -359,15 +574,24 @@ function cardsRankToString (rank) {
   }
 }
 
+
+// resNotes
+function resNotes (notes) {
+  // TODO: give suggestions on mai3/mai4/gong from notes
+  return ':素质游戏，自觉进贡，静待服务器升级！'
+}
+
+// writeNotes
 function writeNotes (notes) {
 
-  let data = JSON.stringify(student, null, 2);
+  // TODO write to database e.g., mongodb
+  let notesStr = JSON.stringify(notes, null, 2);
 
   // TODO timestamp - need some random number 
-  fs.writeFile('notes-' + (new Date()).toISOString + '.json', data, (err) => {  
-      if (err) throw err;
-      console.log('Data written to file');
-  });
+  fs.writeFile(
+    'notes-' + (new Date()).toISOString + '.json', notesStr, (error) => {  
+      if (error) throw error
+  })
 
 }
 
@@ -383,7 +607,17 @@ module.exports = {
   isCardsOutGoJi4Kd,
   isCardsOut3d,
   isCardsOut4d,
+  isCardsOutTd,
   isCardsOutBeatenPrevCardsOut,
+  isHandDian,
+  isHandMens,
+  isHandShaoInit,
+  isHandShaoGoOn,
+  isHandShaoBkUp,
+  isHandShaoEnde,
+  setHandNextCask,
+  setHandNextPass,
+  setHandNextCout,
   isHandEnde,
   isGameEnde,
   cardsToString,
