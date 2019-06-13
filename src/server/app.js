@@ -253,6 +253,8 @@ io.on('connection', (socket) => {
 
     console.log('set-user-hand-pass|init:', notes.status)
 
+    notes.status[payload.id] = 'pass'
+
     asksId = core.setHandNextPass(notes, payload)
 
     io.emit('srv-hands-next', { id: asksId })
@@ -265,6 +267,8 @@ io.on('connection', (socket) => {
   socket.on('set-user-hand-cask', (payload) => {
     
     console.log('set-user-hand-cask|init:', notes.status)
+
+    notes.status[payload.id] = 'cask'
 
     asksId = core.setHandNextCask(notes, payload)
 
@@ -306,6 +310,18 @@ io.on('connection', (socket) => {
 
     notes.hands.push(notes.currHand)
 
+    notes.status.forEach((status, index, array) => {
+      if (status === 'cask') { array[index] = 'pass' }
+    })
+
+    if (notes.prevHand.id === notes.currHand.id) {
+      notes.status.forEach(
+        (status, index, array) => { 
+          if (status !== 'ende') { array[index] = 'play' }
+        }
+      )
+    }
+
     // 判断 点 闷 烧 落
     // 判断开点
     if (core.isHandDian(notes, payload)) {
@@ -346,7 +362,13 @@ io.on('connection', (socket) => {
     }
 
     if (core.isHandShaoGoOn(notes, payload)) {
-
+      if (!_.isEmpty(notes.shao) && notes.shao.on) {
+        io.emit(
+          'srv-message-addon', {
+            messages: [ `:${payload.name}烧牌不带王？扣币！` ]
+          }
+        )
+      }
     }
 
     if (core.isHandShaoInit(notes, payload)) {
@@ -391,13 +413,19 @@ io.on('connection', (socket) => {
     }
     
     // 判断科落 -> 判断牌局结束
-    if (core.isCardsOut3d(payload.cards)) {
+    if (core.isHandLake(notes, payload)) {
 
-      for (let i = 0; i < 6; i++) {
-        if (_.isUndefined(notes.lake.indexOf(i))) {
-          notes.lake[payload.id] = i
+      if (cards[payload.id].length === 0) {
+        for (let i = 0; i < 6; i++) {
+          if (_.isUndefined(notes.lake.indexOf(i))) {
+            notes.lake[payload.id] = i
+          }
         }
+      } else {
+        console.log('set-user-hand-cout|core.isHandLake|sth. wrong? 3 must be out at last.')
       }
+      
+      notes.status[payload.id] = 'ende'
 
       notes.numAck -= 1
 
@@ -432,7 +460,7 @@ io.on('connection', (socket) => {
     fn(route)
   })
 
-  // get-hands
+  // get-cards
   socket.on('get-cards', (payload, fn) => {
     if (payload.id === socket.user.seat) {
       fn(cards[socket.user.seat])
@@ -441,6 +469,10 @@ io.on('connection', (socket) => {
       fn([])
     }
   })
+
+  // set-cards
+  //  require by app-test.js
+  // socket.on('set-cards', (payload) => { cards = payload })
 
   // disconnect
   socket.on('disconnect', () => {
@@ -463,9 +495,9 @@ io.on('connection', (socket) => {
 
 function seatsHandsEndeProcess (io, socket, payload) {
 
-  seats[payload.id].status = 'ende'
+  // notes.status[payload.id] = 'ende'
 
-  notes.status[payload.id] = 'ende'
+  seats[payload.id].status = 'ende'
 
   io.emit(
     'srv-user-hand-ende', {
@@ -476,9 +508,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
   io.emit(
     'srv-messages-addon', {
       messages: [ 
-        ':' + '恭喜' + payload.name + '拿到' + [
-          '头科', '二科', '三科', '四科', '二落', '大落'
-        ][notes.lake[payload.id]]
+        ':' + '恭喜' + payload.name + '拿到' + core.lakeStr[notes.lake[payload.id]]
       ]
     }
   )
@@ -486,7 +516,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
   console.log('seats: ', seats)
   
   // _(seats).map('status').every(v => v === 'ende')
-  if (core.isGameEnde(cards)) {
+  if (core.isGameEnde(notes)) {
 
     if (notes.numAck > 3) {
       console.log(
@@ -516,7 +546,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
 
     ]
 
-    initId = notes.lake.indexOf(5)
+    asksId = notes.lake.indexOf(5)
 
     // TODO: (in core) stats from notes on dsml
     payload.news = core.resNotes(notes)

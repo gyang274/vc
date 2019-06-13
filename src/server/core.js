@@ -32,6 +32,13 @@ const rankNum = {
   '1': 17,
 }
 
+const lakeStr = [
+  '头科', '二科', '三科', '四科', '二落', '大落'
+]
+
+const lakeNum = [
+  2, 1, 0, 0, -1, -2
+]
 
 // setDeck
 //   set a deck of 196 cards [{suit, rank, snum, rnum}, ..]
@@ -107,8 +114,9 @@ function setCards () {
 //   set a table of 6 player notes on games
 function setNotes () {
 
-  // notes: 
+  // notes:
   //  status: <'none'> -> 'play'/'feng'/'cout'/'cask'/'pass'/'give'/'ende'
+  // TODO: add mode: 'feng' in notes
   let notes = {
     names: [
 
@@ -300,6 +308,16 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
   return false
 }
 
+// getSeatId
+function getSeatId (id, n) { return (id + n) % 6 }
+
+// isOnSeatIxId
+//  isOnSeatIxId: on same seat
+function isOnSeatIxId (id1, id2) { return id1 === id2 }
+
+// isOnSeatOxId
+//  isOnSeatOxId: 对家
+function isOnSeatOxId (id1, id2) { return id1 === (id2 + 3) % 6 }
 
 // isHandDian
 function isHandDian (notes, payload) {
@@ -319,7 +337,8 @@ function isHandMens (notes, payload, cards) {
   return !_.isEmpty(notes.prevHand)
       && cards[notes.prevHand.id].length === 1
       && notes.prevHand.id !== payload.id
-      && notes.prevHand.id !== (payload.id + 3) % 6
+      // 对家有闷无贡 可以闷牌但是无贡
+      // && notes.prevHand.id !== (payload.id + 3) % 6
       
 }
 
@@ -356,12 +375,15 @@ function isHandShaoEnde (notes, payload) {
       && isCardsOut3d(payload.cards)
 }
 
+// isHandLake
+function isHandLake (notes, payload) {
 
+  return isCardsOut3d(payload.cards)
+  
+}
 
 // setHandNextCask
 function setHandNextCask (notes, payload) {
-
-  notes.status[payload.id] = 'cask'
 
   let asksId = -1
   for (let i = 1; i < 3; i++) {
@@ -370,7 +392,7 @@ function setHandNextCask (notes, payload) {
     }
   }
   if (asksId === -1) {
-    asksId = payload.id
+    asksId = (payload.id + 3) % 6
   }
 
   return asksId
@@ -382,51 +404,46 @@ function setHandNextPass (notes, payload) {
 
   let asksId = -1
 
-  // 对家双过
-  //  5人 上家双过或者下家双过 无头过来的
-  if (notes.status[payload.id] === 'cask'
-   || notes.status[payload.id] === 'pass') {
-    dist = (payload.id - notes.currHand.id + 6) % 6
-    if (dist === 1) {
-      asksId = (payload.id + 4) % 6
-    } else if (dist === 5) {
-      asksId = notes.currHand.id
-    }
-
-    asksId = (payload.id + 3) % 6
-    if (notes.status[asksId] === 'cout') {
-
-    } else {
-
-      asksId = (payload.id + 2) % 6
-
-    }
-    
-  }
-
-  
-  if (notes.status[payload.id] === 'play') {
-    notes.status[payload.id] = 'pass'
+  if (notes.numAck > 4) {
     if (isCardsOutGoJi(notes.currHand.cards)) {
-      asksId = notes.currHand.id
+      // 5-6人 && 对家够级 -> 对家 || 无头 (下家, 上家)
+      asksId = (payload.id + 3) % 6
+      if (notes.status[asksId] !== 'cout') {
+        asksId = (payload.id + 1) % 6
+        if (notes.status[asksId] !== 'cout') {
+          asksId = (payload.id + 4) % 6
+        }
+      }
     } else {
+      // 5-6人 不打够级 -> 跳过pass/ende 顺位依次 对家双弃
+      let doubleAsksSeatO = true
       for (let i = 1; i < 6; i++) {
         asksId = (payload.id + i) % 6
         if (notes.status[asksId] === 'play') {
+          doubleAsksSeatO = false
           break
-        } else if (notes.status[asksId] === 'cout') {
-          if (notes.status[(asksId + 3) % 6] === 'cask') {
-            // 让牌优先
-            askId = (asksId + 3) % 6
-            break
-          } else {
-            break
-          }
+        }
+      }
+      if (doubleAsksSeatO) {
+        if (payload.id === (notes.currHand.id + 3) % 6) {
+          asksId = notes.currHand.id
+        } else {
+          asksId = (notes.currHand.id + 3) % 6
         }
       }
     }
-  } 
-  
+  } else {
+
+    // 2-4人 -> 顺位依次
+    for (let i = 1; i < 6; i++) {
+      asksId = (payload.id + 1) % 6
+      if (notes.status[asksId] !== 'ende') {
+        break
+      }
+    }
+
+  }
+
   if (asksId === -1) {
     console.log('setHandNextPass|sth. wrong?', notes, payload)
   }
@@ -442,12 +459,6 @@ function setHandNextCout (notes, payload) {
 
   if (notes.numAck > 4) {
 
-    if (notes.prevHand.id === payload.id) {
-      notes.status.forEach(
-        (s, i, a) => { if (s !== 'ende') { a[i] = 'play' } }
-      )
-    }
-    
     if (isCardsOutGoJi(payload.cards)) {
 
       // 5-6人 && 够级 -> 对家 || 无头 (下家, 上家)
@@ -455,34 +466,22 @@ function setHandNextCout (notes, payload) {
 
       if (notes.status[asksId] === 'ende') {
         asksId = (payload.id + 1) % 6
-        if (notes.status[asksId] === 'give') {
-          asksId = (payload.id + 5) % 6
-          if (notes.status[asksId] === 'give') {
-            asksId = payload.id
-          }
-        }
-      }
-      
-      if (notes.status[asksId] === 'give') {
-        asksId = payload.id
       }
 
     } else {
 
-      // 5-6人 不打够级 -> 跳过pass/ende 顺位依次 对家双重give确认
+      // 5-6人 不打够级 -> 跳过pass/ende 顺位依次 对家双弃
       let doubleAsksSeatO = true
       for (let i = 1; i < 6; i++) {
         asksId = (payload.id + i) % 6
-        if (!['pass', 'give', 'ende'].includes(notes.status[asksId])) {
+        if (notes.status[asksId] === 'play') {
           doubleAsksSeatO = false
           break
         }
       }
       if (doubleAsksSeatO) {
         asksId = (payload.id + 3) % 6
-        if (notes.status[asksId] === 'give'
-         || notes.status[asksId] === 'ende'
-        ) {
+        if (notes.status[asksId] === 'ende') {
           asksId = payload.id
         }
       }
@@ -510,27 +509,12 @@ function setHandNextCout (notes, payload) {
 }
 
 
-
-// isHandEnde
-// inputs:
-//  cards: cardsOnHand of one player
-function isHandEnde (cards) {
-
-  return cards.length === 0
-
-}
-
 // isGameEnde
-// inputs:
-//  cards: cardsOnHand of 6 players, [[], [], [], [], [], [],]
-function isGameEnde (cards) {
+function isGameEnde (notes) {
 
-  if ((isHandEnde(cards[0]) && isHandEnde(cards[2]) && isHandEnde(cards[4]))
-   || (isHandEnde(cards[1]) && isHandEnde(cards[3]) && isHandEnde(cards[5]))
-  ) {
-    return true
-  }
-  return false
+  return (notes.status[0] === 'ende' && notes.status[2] === 'ende' && notes.status[4] === 'ende')
+      || (notes.status[1] === 'ende' && notes.status[3] === 'ende' && notes.status[5] === 'ende')
+  
 }
 
 // cardsToString
@@ -577,8 +561,66 @@ function cardsRankToString (rank) {
 
 // resNotes
 function resNotes (notes) {
-  // TODO: give suggestions on mai3/mai4/gong from notes
-  return ':素质游戏，自觉进贡，静待服务器升级！'
+  
+  // ':素质游戏，自觉进贡！'
+  news = [
+    {}, {}, {}, {}, {}, {}, 
+  ]
+
+  notes.names.forEach(
+    (name, id) => {
+      news[id].name = name
+    }
+  )
+
+  news.forEach(it => it.points = 0)
+
+  // dian
+  news.forEach(it => it.dian = '')
+
+  notes.dian.forEach(
+    (dian, id) => {
+      news[id].dian = dian ? '开点' : '没开'
+      news[id].points = (
+        (notes.dian[id] ? 1 : -1) + (notes.dian[(id + 3) % 6] ? -1 : 1)
+      )
+    }
+  )
+
+  // mens
+  news.forEach(it => it.mens = '')
+
+  notes.mens.forEach(
+    (mens) => {
+      news[mens.src].mens += `闷了${mens.dst}！`
+      news[mens.dst].mens -= `被${mens.src}闷！`
+      news[mens.src].points += 2
+      news[mens.dst].points -= 2
+    }
+  )
+
+  // shao
+  news.forEach(it => it.shao = '')
+
+  notes.shao.forEach(
+    (shao) => {
+      news[shao.src].shao += `烧了${shao.dst}！`
+      news[shao.dst].shao -= `被${shao.src}烧！`
+      news[shao.src].points += 2
+      news[shao.src].points += 2
+    }
+  )
+
+  // lake
+  notes.lake.forEach(
+    (lake, id) => {
+      news[id].lake = lakeStr[lake] 
+      news[id].points = lakeNum[lake]
+    }
+  )
+
+  return news
+
 }
 
 // writeNotes
@@ -587,7 +629,7 @@ function writeNotes (notes) {
   // TODO write to database e.g., mongodb
   let notesStr = JSON.stringify(notes, null, 2);
 
-  // TODO timestamp - need some random number 
+  // TODO timestamp + random number as filename
   fs.writeFile(
     'notes-' + (new Date()).toISOString + '.json', notesStr, (error) => {  
       if (error) throw error
@@ -597,6 +639,12 @@ function writeNotes (notes) {
 
 // module.exports
 module.exports = {
+  // constants
+  suitNum,
+  rankNum,
+  lakeStr,
+  lakeNum,
+  // functions
   setDeck, 
   setCards, 
   setNotes, 
@@ -609,16 +657,19 @@ module.exports = {
   isCardsOut4d,
   isCardsOutTd,
   isCardsOutBeatenPrevCardsOut,
+  getSeatId,
+  isOnSeatIxId,
+  isOnSeatOxId,
   isHandDian,
   isHandMens,
   isHandShaoInit,
   isHandShaoGoOn,
   isHandShaoBkUp,
   isHandShaoEnde,
+  isHandLake,
   setHandNextCask,
   setHandNextPass,
   setHandNextCout,
-  isHandEnde,
   isGameEnde,
   cardsToString,
 }
