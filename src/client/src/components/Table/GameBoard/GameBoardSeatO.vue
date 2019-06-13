@@ -5,6 +5,7 @@
     <v-flex xs2>
       <apps-player-profile
         :username="username"
+        :userinfo="userinfo"
       ></apps-player-profile>
     </v-flex>
     <v-flex xs3>
@@ -89,6 +90,12 @@
       username: {
         type: String,
         default: ''
+      },
+      userinfo: {
+        type: Object,
+        default: () => ({
+          title: '', coins: 0
+        })
       },
       status: {
         type: String,

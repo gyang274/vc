@@ -227,7 +227,7 @@ async function actionCout (id, rks) {
 
   for (rk of rks) {
     cindex = _.findLastIndex(cards[id], {rank: rk})
-    if (_.isUndefined(cindex)) {
+    if (cindex === -1) {
       console.log('actionCout|card rank not available/enough:', rk)
     } else {
       cardsIndex.push(cindex)
@@ -413,9 +413,15 @@ async function onGameCout () {
   await sleep(100); await actionPass(0)
 
   // optional 解烧带闷
-  console.log(cards[3])
   await sleep(100); await actionCout(3, ['1', '2', '7', '7', '7'])
-  await sleep(100); await actionCout(0, ['2', '2', '2', '2', '8', '8', '8', '8'])
+  // await sleep(100); await actionCout(0, ['2', '2', '2', '2', '8', '8', '8', '8'])
+  await sleep(100); await actionPass(0)
+  await sleep(100); await actionPass(2)
+  await sleep(100); await actionPass(3)
+  await sleep(100); await actionPass(3)
+  await sleep(100); await actionPass(3)
+  await sleep(100); await actionPass(3)
+
 
 }
 

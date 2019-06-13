@@ -10,6 +10,7 @@
       <v-flex xs8>
         <apps-game-board-seat-o
           :username="usernames[3]"
+          :userinfo="userinfos[3]"
           :note="notes[3]"
           :status="status[3]"
           :cardsOut="cardsOut[3]"
@@ -22,6 +23,7 @@
         <!-- 上联 -->
         <apps-game-board-seat-l
           :username="usernames[4]"
+          :userinfo="userinfos[4]"
           :note="notes[4]"
           :status="status[4]"
           :cardsOut="cardsOut[4]"
@@ -30,6 +32,7 @@
         <!-- 上家 -->
         <apps-game-board-seat-l
           :username="usernames[5]"
+          :userinfo="userinfos[5]"
           :note="notes[5]"
           :status="status[5]"
           :cardsOut="cardsOut[5]"
@@ -37,11 +40,14 @@
         ></apps-game-board-seat-l>
       </v-flex>
       <!-- 信息中心 -->
-      <v-flex xs4 v-if="status.includes('exec') || _.every(status, s => s === 'ende')">
-        
-        <!-- // TODO move to a components -->
-        <div><p>{{ news }}</p></div>
-
+      <v-flex xs4 
+        v-if="_.every(status, s => { s === 'ende' || s === 'waitOk' }) && status[0] === 'ende'"
+      >
+        <apps-game-board-news
+          :news="news"
+          :newsShow="newsShow"
+          @action-ackl="newsShow = false"
+        ></apps-game-board-news>
       </v-flex>
       <v-flex xs4 v-else><br><br><br><br><br></v-flex>
       <!-- 下联 & 下家 -->
@@ -49,6 +55,7 @@
         <!-- 下联 -->
         <apps-game-board-seat-r
           :username="usernames[2]"
+          :userinfo="userinfos[2]"
           :note="notes[2]"
           :status="status[2]"
           :cardsOut="cardsOut[2]"
@@ -57,6 +64,7 @@
         <!-- 下家 -->
         <apps-game-board-seat-r
           :username="usernames[1]"
+          :userinfo="userinfos[1]"
           :note="notes[1]"
           :status="status[1]"
           :cardsOut="cardsOut[1]"
@@ -68,6 +76,7 @@
       <v-flex xs8>  
         <apps-game-board-seat-i
           :username="usernames[0]"
+          :userinfo="userinfos[0]"
           :note="notes[0]"
           :status="status[0]"
           :cardsOnHand="cards"
@@ -104,35 +113,11 @@
       </v-flex>
       <!-- 本地提示信息 -->
       <v-flex xs12>
-        <div class="text-xs-center">
-          <v-dialog
-            v-model="msgsShow"
-            width="1024"
-          >
-            <v-card>
-              <v-card-title
-                class="headline grey lighten-2"
-                primary-title
-              >
-                友情提示
-              </v-card-title>
-              <v-card-text>
-                {{ msgs }}
-              </v-card-text>
-              <v-divider></v-divider>
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn
-                  color="primary"
-                  flat
-                  @click="msgsShow = false"
-                >
-                  受教了！
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-        </div>
+        <apps-game-board-msgs
+          :msgs="msgs"
+          :msgsShow="msgsShow"
+          @action-ackl="msgsShow = false"
+        ></apps-game-board-msgs>
       </v-flex>
     </v-layout>
   </v-container>
@@ -145,7 +130,10 @@
   // eslint-disable-next-line
   import { mapGetters, mapActions } from 'vuex'
 
-  import Messager from '@/components/Messager.vue'
+  import Messager from '@/components/Messager'
+
+  import GameBoardMsgs from './GameBoard/GameBoardMsgs'
+  import GameBoardNews from './GameBoard/GameBoardNews'
 
   import GameBoardSeatI from './GameBoard/GameBoardSeatI'
   import GameBoardSeatL from './GameBoard/GameBoardSeatL'
@@ -156,6 +144,8 @@
     name: 'apps-game-board',
     components: {
       appsMessager: Messager,
+      appsGameBoardMsgs: GameBoardMsgs,
+      appsGameBoardNews: GameBoardNews,
       appsGameBoardSeatI: GameBoardSeatI,
       appsGameBoardSeatL: GameBoardSeatL,
       appsGameBoardSeatO: GameBoardSeatO,
@@ -168,11 +158,19 @@
       usernames: [
         '', '', '', '', '', ''
       ],
+      userinfos: [
+        { title: '平民', coins: 0, },
+      ],
       status: [
         'wait', 'wait', 'wait', 'wait', 'wait', 'wait',
       ],
       notes: [
-        [], [], [], [], [], []
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
       ],
       cards: [
 
@@ -200,6 +198,7 @@
       ],
       // GameResults
       news: '',
+      newsShow: false,
       // LocalMessages
       msgs: '',
       msgsShow: false,
@@ -271,10 +270,24 @@
       actionCout () {
         if (this.cardsActiveIndex.length > 0) {
           let cardsOfHand = _.pullAt(this.cards, this.cardsActiveIndex)
-          if (this.isCardsOutValid(cardsOfHand)) {
-            //TODO: add logic to check:
-            // if last cardsOut not from self, not 3, must beaten
-            // 3 must be last one
+          // check cardsOfHand is ok
+          let isCardsOfHandOk = this.isCardsOutValid(cardsOfHand)
+          // if cardsOut is 3, must last hand
+          if (cardsOfHand[0].rank === '3') {
+            isCardsOfHandOk = isCardsOfHandOk && _.isEmpty(this.cards)
+          }
+          // if prevCardsOut not from self and is not 3 (接风), must beaten
+          let prevCardsOutIndex = -1
+          for (let i = 0; i < 6; i++) {
+            if (!_.isEmpty(cardsOut[i])) {
+              prevCardsOutIndex = i; break
+            }
+          }
+          if (prevCardsOutIndex > 0 && cardsOut[prevCardsOutIndex][0].rank !== '3') {
+            isCardsOfHandOk = isCardsOfHandOk && this.isCardsOutBeatenPrevCardsOut(cardsOfHand, cardsOut[prevCardsOutIndex])
+          }
+          // cardsOfHand is ok
+          if (isCardsOfHandOk) {
             this.cardsOut = [
               [], [], [], [], [], []
             ]
@@ -284,6 +297,7 @@
               cards: cardsOfHand, cardsIndex: this.cardsActiveIndex,
             })
             this.cardsActiveIndex = []
+            // -> srv-user-hand-ende from srv (unified handle with mens)
             // if (this.cards.length === 0) {
             //   this.$set(this.status, 0, 'ende')
             //   this.socket.emit('set-user-hand-ende', {
@@ -295,7 +309,7 @@
             this.cards = _.sortBy(
               this.cards.concat(cardsOfHand), ['rnum', 'snum']
             )
-            // TODO: transient message
+            // transient message
             this.msgs += ['您这手牌打不出去啊！愣打您会被揍的！']
           }
         }
@@ -330,13 +344,78 @@
         }
 
       },
+      // check cardsOut (cardsOfHand) can beat previous cardsOut (cardsOut), assume cardsOut is valid
+      isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
+        
+        let numCardsByRank = _.countBy(cardsOut, 'rank')
+
+        let ranks = Object.keys(numCardsByRank)
+
+        // let numCards = _.sum(Object.values(numCardsByRank))
+
+        let prevNumCardsByRank = _.countBy(prevCardsOut, 'rank')
+
+        let prevRanks = Object.keys(prevNumCardsByRank)
+
+        // let prevNumCards = _.sum(Object.values(prevNumCardsByRank))
+
+        if (prevRanks.includes('0')) {
+          if (numCardsByRank['1'] >= prevNumCardsByRank['0']) {
+            delete prevNumCardsByRank['0']
+            prevRanks = _.pull(prevRanks, '0')
+            numCardsByRank['1'] = numCardsByRank['1'] - prevNumCardsByRank['0']
+            if (numCardsByRank['1'] === 0) {
+              delete numCardsByRank['1']
+              ranks = _.pull(ranks, '1')
+            }
+          } else {
+            return false
+          }
+        } 
+        
+        if (prevRanks.includes('1')) {
+          if (numCardsByRank['2'] >= 3 * prevNumCardsByRank['1']) {
+            delete prevNumCardsByRank['1']
+            prevRanks = _.pull(prevRanks, '0')
+            numCardsByRank['2'] = numCardsByRank['2'] - 3 * prevNumCardsByRank['1']
+            if (numCardsByRank['2'] === 0) {
+              delete numCardsByRank['2']
+              ranks = _.pull(ranks, '2')
+            }
+          } else {
+            return false
+          }
+        }
+
+        if (prevRanks.includes['2'] && prevRanks.length === 1) {
+          if (numCardsByRank['0'] + numCardsByRank['1'] === prevNumCardsByRank['2'] 
+          && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
+          ) {
+            return true
+          } else {
+            return false
+          }
+        }
+
+        if (_.min(_.map(ranks, r => rankNum[r])) > _.min(_.map(prevRanks, r => rankNum[r]))
+        && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
+        ) {
+          return true
+        } else {
+          return false
+        }
+
+        return false
+      },
     },
     created () {
-      this.socket.emit('get-names', {}, (response) => {
+      this.socket.emit('get-users', {}, (response) => {
         // assign to usernames according to user.name and user.seat matches with response
-        console.log('get-names:', response)
-        this.usernames = response.concat(response.splice(0, this.user.seat))
-        console.log('get-names:', this.usernames)
+        console.log('get-users:', response)
+        this.usernames = response.names.concat(response.names.splice(0, this.user.seat))
+        this.userinfos = response.names.concat(response.names.splice(0, this.user.seat))
+        console.log('get-users|usernames:', this.usernames)
+        console.log('get-users|userinfos:', this.userinfos)
       })
       this.socket.on('srv-user-hand-wait-ok', (payload) => {
         let index = (payload.seat - this.user.seat + this.usernames.length) % this.status.length
@@ -387,11 +466,27 @@
           [], [], [], [], [], []
         ]
         let index = (payload.id - this.user.seat + this.usernames.length) % this.usernames.length
-
-        // TODO: if payload id === this.user.seat
-        // remove from cards ... (disconnect/men)
-
+        if (index === 0) {
+          // server triggered this user hand cout, e.g., mens, [TODO] time up, [TODO] disconnect
+          payload.cards = _.reverse(_.sortBy(payload.cards), ['rnum', 'snum'])
+          for (cd of payload.cards) {
+            cdidx = _.findLastIndex(this.cards, cd)
+            if (cdidx === -1) {
+              console.log(
+                'srv-user-hand-cout|sth. wrong? srv asks user to hand cout card not available.',
+                'cards on hand:', this.cards, 'cards srv asks:', payload.cards
+              )
+            } else {
+              _.pullAt(this.cards, cdidx)
+            }
+          }
+        }
         this.$set(this.cardsOut, index, payload.cards)
+      })
+      this.socket.on('srv-user-note', (payload) => {
+        for (nt of payload) {
+          this.$set(this.notes[nt.id][nt.dmsl], nt.kb, nt.kd)
+        }
       })
       this.socket.on('srv-user-hand-ende', (payload) => {
         let index = (payload.id - this.user.seat + this.usernames.length) % this.usernames.length
@@ -400,6 +495,7 @@
       this.socket.on('srv-hands-ende', (payload) => {
         console.log('srv-hands-ende', payload)
         this.news = payload.news
+        this.newsShow = true
         this.cards = []
         this.cardsOut = [
           [], [], [], [], [], [], 
@@ -407,10 +503,9 @@
         this.status = [
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 
         ]
+        this.userinfos = payload.userinfos.concat(payload.userinfos.splice(0, this.user.seat))
+        
       })
-
-
-      //TODO: from app.js srv-user-hand-show'
     },
     mounted () {
 

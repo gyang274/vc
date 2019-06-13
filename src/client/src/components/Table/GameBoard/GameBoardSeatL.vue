@@ -4,6 +4,7 @@
       <br>
       <apps-player-profile
         :username="username"
+        :userinfo="userinfo"
       ></apps-player-profile>
       <br>
       <apps-player-note
@@ -75,6 +76,12 @@
       username: {
         type: String,
         default: ''
+      },
+      userinfo: {
+        type: Object,
+        default: () => ({
+          title: '', coins: 0
+        })
       },
       status: {
         type: String,

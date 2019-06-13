@@ -1,0 +1,75 @@
+<template>
+  <v-layout row wrap>
+    <v-flex xs12>
+      <div class="text-xs-center">
+        <v-dialog
+          v-model="msgsShow"
+          width="1024"
+        >
+          <v-card>
+            <v-card-title
+              class="headline grey lighten-2"
+              primary-title
+            >
+              友情提示
+            </v-card-title>
+            <v-card-text>
+              {{ msgs }}
+            </v-card-text>
+            <v-divider></v-divider>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="primary white--text"
+                flat
+                @click="actionAckl()"
+              >
+                受教了！
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </div>
+    </v-flex>
+  </v-layout>
+
+</template>
+
+<script>
+  export default {
+    name: 'apps-game-board-msgs',
+    props: {
+      msgs: {
+        type: Array,
+        default: () => ([
+
+        ])
+      },
+      msgsShow: {
+        type: Boolean,
+        default: false,
+      },
+    },
+    data: () => ({
+      
+    }),
+    computed: {
+      
+    },
+    methods: {
+      actionAckl () {
+        this.$emit('actionAckl')
+      }
+    },
+    created () {
+
+    },
+    mounted () {
+
+    }
+  }
+</script>
+
+<style scoped>
+
+</style>

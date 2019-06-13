@@ -359,7 +359,10 @@ function isHandShaoGoOn (notes, payload) {
   return !_.isEmpty(notes.shao)
       && notes.shao[0].on
       && notes.shao[0].src === payload.id
-      && isCardsOutTd(payload.cards)
+      // apply penalty on shao without Td outside
+      //  so that isHandShaoGoOn and isHandShaoBkUp 
+      //  conditions together make the universe complete
+      // && isCardsOutTd(payload.cards)
 }
 
 function isHandShaoBkUp (notes, payload) {
