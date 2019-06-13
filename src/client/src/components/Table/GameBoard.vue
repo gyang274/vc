@@ -408,6 +408,9 @@
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 
         ]
       })
+
+
+      //TODO: from app.js srv-user-hand-show'
     },
     mounted () {
 

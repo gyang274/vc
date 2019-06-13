@@ -3,6 +3,8 @@ const _ = require('lodash')
 
 const io = require('socket.io-client')
 
+const core = require('./core')
+
 // create 6 players
 let usernames = [
   'yg', 'lw', 'cl', 'fy', 'yb', 'fl' 
@@ -90,17 +92,24 @@ async function getNames () {
 }
 
 // action waitOk
-async function actionWaitOk () {
+async function actionWaitOk (isCardsTest = true) {
 
   sockets.forEach(
     (socket, index) => {
       socket.emit('set-user-hand-wait-ok', {
-        name: usernames[index], seat: index
+        id: index, name: usernames[index],
       })
     }
   )
 
   // action waitOk -> srv-hands-init
+  await sleep(100)
+
+  // set cards for consistent cards
+  if (isCardsTest) {
+    await setCardsTest()
+  }
+
   await sleep(100)
 
   sockets.forEach(
@@ -116,7 +125,7 @@ async function actionWaitOk () {
 // action exec
 async function actionExec (rk = '3') {
 
-  // console.log('actionExec|cardsInit:', cards)
+  console.log('actionExec|cardsInit:', cards)
 
   // count how many rk = '3' on each player hand
   countOfRk = []
@@ -143,8 +152,7 @@ async function actionExec (rk = '3') {
       c = _.pullAt(cards[i], [cidx])
       sockets[i].emit(
         'set-user-hand-exec', {
-          name: usernames[i], seat: i,
-          id: j, cards: c, cardsIndex: cidx
+          name: usernames[i], id: i, jd: j, cards: c, cardsIndex: cidx
         }
       )
       sockets[j].on(
@@ -162,7 +170,7 @@ async function actionExec (rk = '3') {
     }
   }
   await sleep(100)
-  // console.log('actionExec|cardsExec:', cards)
+  console.log('actionExec|cardsExec:', cards)
 }
 
 // action execOk
@@ -212,7 +220,7 @@ async function showCardsOnHand (id) {
 // action cout
 async function actionCout (id, rks) {
 
-  console.log('actionCout|rks must ordered from 1, 0, 2, A, ..., 5, 4, 3.')
+  // console.log('actionCout|rks must ordered from 1, 0, 2, A, ..., 5, 4, 3.')
 
   cardsIndex = []
   cardsOfHand = []
@@ -223,21 +231,193 @@ async function actionCout (id, rks) {
       console.log('actionCout|card rank not available/enough:', rk)
     } else {
       cardsIndex.push(cindex)
-      cardsOfHand.push(
-        _.pullAt(cards[id], cindex)
-      )
+      cardsOfHand = cardsOfHand.concat(_.pullAt(cards[id], cindex))
     }
   }
 
   sockets[id].emit(
     'set-user-hand-cout', {
-      name: usernames[id], seat: id,
-      id: id, cards: cardsOfHand, cardsIndex: cardsIndex,
+      id: id, name: usernames[id], cards: cardsOfHand, cardsIndex: cardsIndex,
     }
   )
 
 }
 
+// action cask
+async function actionCask (id) {
+  sockets[id].emit(
+    'set-user-hand-cask', {
+      id: id, name: usernames[id]
+    }
+  )
+}
+
+// action pass
+async function actionPass (id) {
+  sockets[id].emit(
+    'set-user-hand-pass', {
+      id: id, name: usernames[id]
+    }
+  )
+}
+
+// unit test case
+async function setCardsTest () {
+
+  // set-cards
+  cards = [
+    // id 0
+    [
+      { suit:  'S', rank: '3' },
+      { suit:  'S', rank: '3' },
+      { suit:  'S', rank: '5' },
+      { suit:  'S', rank: '5' },
+      { suit:  'S', rank: '8' },
+      { suit:  'S', rank: '8' },
+      { suit:  'S', rank: '8' },
+      { suit:  'S', rank: '8' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'T', rank: '1' },
+    ], 
+    // id 1
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: 'K' },
+    ],
+    // id 2
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: 'A' },
+      { suit: 'S', rank: 'A' },
+
+
+      { suit: 'S', rank: '10' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      
+    ],
+    // id 3
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: '7' },
+      { suit: 'S', rank: '7' },
+      { suit: 'S', rank: '7' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'T', rank: '1' },
+    ],
+    // id 4
+    [
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: 'Q' },
+      { suit: 'S', rank: 'Q' },
+      { suit: 'S', rank: 'Q' },
+      { suit: 'S', rank: '2' },
+    ],
+    // id 5
+    [
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: 'K' },
+      { suit: 'S', rank: 'K' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '1' },
+    ], 
+  ]
+  
+  cards.forEach(
+    cardsOnHand => cardsOnHand.forEach(
+      cd => {
+        cd.snum = core.suitNum[cd.suit]
+        cd.rnum = core.rankNum[cd.rank]
+      }
+    )
+  )
+
+  cards.forEach(
+    cardsOnHand => _.sortBy(cardsOnHand, ['rnum', 'snum'])
+  )
+
+  sockets[0].emit('set-cards', cards)
+
+}
+
+async function giveUp4d(ids = [2, 3]) {
+  // id2 give 4, id3 give up 4
+  for (i of ids) {
+    _.pullAt(cards[i], 1)
+    sockets[i].emit(
+      'set-user-hand-exec', {
+        id: i, jd: i, cards: [
+          { suit: 'S', rank: '4', snum: 3, rnum: 4 },
+        ],
+        cardsIndex: 1
+      }
+    )
+  }
+}
+
+async function onGameCout () {
+
+  await sleep(100); await actionCout(0, ['5', '5'])
+
+  await sleep(100); await actionPass(1)
+
+  await sleep(100); await actionCout(2, ['8', '8'])
+
+  await sleep(100); await actionPass(3)
+
+  await sleep(100); await actionPass(4)
+
+  await sleep(100); await actionCask(5)
+
+  await sleep(100); await actionPass(0)
+
+  await sleep(100); await actionCout(5, ['K', 'K'])
+
+  // 够级
+  await sleep(100); await actionPass(2)
+
+  // 开点
+  await sleep(100); await actionCout(5, ['4'])
+
+  // 对家双弃
+  await sleep(100); await actionPass(0)
+  await sleep(100); await actionPass(1)
+  await sleep(100); await actionPass(2)
+  await sleep(100); await actionPass(3)
+  await sleep(100); await actionPass(4)
+  await sleep(100); await actionPass(2)
+
+  await sleep(100); await actionCout(5, ['2'])
+  await sleep(100); await actionPass(2)
+  await sleep(100); await actionCout(5, ['1'])
+
+  // 闷烧一体
+  await sleep(100); await actionCout(3, ['2', '2', '2'])
+  await sleep(100); await actionPass(0)
+
+  // optional 解烧带闷
+  console.log(cards[3])
+  await sleep(100); await actionCout(3, ['1', '2', '7', '7', '7'])
+  await sleep(100); await actionCout(0, ['2', '2', '2', '2', '8', '8', '8', '8'])
+
+}
 
 // miscellaneous
 function sleep (ms) {
@@ -267,7 +447,17 @@ async function main () {
 
   await actionExec(rk = '4')
 
+  await sleep(100)
+
+  await giveUp4d()
+
+  await sleep(100)
+
   await actionExecOk()
+
+  await sleep(100)
+
+  await onGameCout()
 
 }
 
@@ -293,6 +483,8 @@ module.exports = {
   actionExec,
   actionExecOk,
   actionCout,
+  actionCask,
+  actionPass,
   // status
   showCardsOnHand,
   // main

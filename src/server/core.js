@@ -324,10 +324,10 @@ function isHandDian (notes, payload) {
 
   // corner case: user play 4 on 1st action directly
   return notes.numAck === 6 
-      && core.isCardsOut4d(payload.cards)
+      && isCardsOut4d(payload.cards)
       && !_.isEmpty(notes.prevHand) 
       && notes.prevHand.id === payload.id 
-      && core.isCardsOutGoJi4Kd(notes.prevHand.cards)
+      && isCardsOutGoJi4Kd(notes.prevHand.cards)
 
 }
 
@@ -377,6 +377,8 @@ function isHandShaoEnde (notes, payload) {
 
 // isHandLake
 function isHandLake (notes, payload) {
+  
+  console.log(payload.cards)
 
   return isCardsOut3d(payload.cards)
   
@@ -387,6 +389,7 @@ function setHandNextCask (notes, payload) {
 
   let asksId = -1
   for (let i = 1; i < 3; i++) {
+    asksId = (payload.id + i) % 6
     if (notes.status[asksId] === 'play') {
       break
     }
@@ -408,7 +411,13 @@ function setHandNextPass (notes, payload) {
     if (isCardsOutGoJi(notes.currHand.cards)) {
       // 5-6人 && 对家够级 -> 对家 || 无头 (下家, 上家)
       asksId = (payload.id + 3) % 6
-      if (notes.status[asksId] !== 'cout') {
+      if (notes.status[asksId] === 'ende') {
+        asksId = notes.currHand.id
+      } else if (notes.status[asksId] === 'cout') {
+        if (notes.numAck === 5) {
+          asksId = (notes.status.indexOf('ende') + 3) % 6
+        }
+      } else {
         asksId = (payload.id + 1) % 6
         if (notes.status[asksId] !== 'cout') {
           asksId = (payload.id + 4) % 6

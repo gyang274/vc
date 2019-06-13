@@ -243,7 +243,7 @@ io.on('connection', (socket) => {
         }
       )
       console.log('set-user-hand-exec-ok', message)
-
+      console.log('xxx', cards[3])
     }
 
   })
@@ -251,7 +251,7 @@ io.on('connection', (socket) => {
   // set user hand pass
   socket.on('set-user-hand-pass', (payload) => {
 
-    console.log('set-user-hand-pass|init:', notes.status)
+    // console.log('set-user-hand-pass|init:', notes.status)
 
     notes.status[payload.id] = 'pass'
 
@@ -259,14 +259,16 @@ io.on('connection', (socket) => {
 
     io.emit('srv-hands-next', { id: asksId })
 
-    console.log('set-user-hand-pass|after:', notes.status)
+    console.log('set-user-hand-pass|ende:', notes.status)
+
+    console.log(`set-user-hand-pass|next: ${asksId}`)
 
   })
 
   // set user hand cask
   socket.on('set-user-hand-cask', (payload) => {
     
-    console.log('set-user-hand-cask|init:', notes.status)
+    // console.log('set-user-hand-cask|init:', notes.status)
 
     notes.status[payload.id] = 'cask'
 
@@ -274,7 +276,9 @@ io.on('connection', (socket) => {
 
     io.emit('srv-hands-next', { id: asksId })
 
-    console.log('set-user-hand-cask|after:', notes.status)
+    console.log('set-user-hand-cask|ende:', notes.status)
+
+    console.log(`set-user-hand-cask|next: ${asksId}`)
 
   })
 
@@ -284,30 +288,35 @@ io.on('connection', (socket) => {
     // check core.isCardsOutValid on client side
     // check core.isCardsOutBeatenPrevCardsOut on client side
 
-    console.log('set-user-hand-cout|init status:', notes.status)
+    // console.log('set-user-hand-cout|init: ' + notes.status)
 
-    console.log('set-user-hand-cout', payload)
+    console.log(payload)
 
     socket.broadcast.emit(
       'srv-user-hand-cout', payload 
     )
 
     // track cout in cards
-    cards[payload.id] = _.sortBy(
-      _.pullAt(cards[payload.id], payload.cardsIndex), ['rnum', 'snum']
-    )
-
+    if (payload.id === 3) {
+      console.log('xxxinit', cards[3])
+    }
+    _.pullAt(cards[payload.id], payload.cardsIndex)
+    cards[payload.id] = _.sortBy(cards[payload.id], ['rnum', 'snum'])
+    if (payload.id === 3) {
+      console.log('xxxleft', cards[3])
+    }
+    
     // track cout in notes
     if (notes.hands.length >= 1) {
       notes.prevHand = notes.currHand
       notes.status[notes.prevHand.id] = 'play'
     }
-
+    
     notes.currHand = {
       id: payload.id, name: payload.name, cards: payload.cards
     }
     notes.status[notes.currHand.id] = 'cout'
-
+    
     notes.hands.push(notes.currHand)
 
     notes.status.forEach((status, index, array) => {
@@ -317,7 +326,7 @@ io.on('connection', (socket) => {
     if (notes.prevHand.id === notes.currHand.id) {
       notes.status.forEach(
         (status, index, array) => { 
-          if (status !== 'ende') { array[index] = 'play' }
+          if (status !== 'ende' && status !== 'cout') { array[index] = 'play' }
         }
       )
     }
@@ -331,6 +340,7 @@ io.on('connection', (socket) => {
           messages: [ ':' + payload.name + '开点！' ]
         }
       )
+      console.log(':' + payload.name + '开点！' )
     }
 
     // 判断烧人
@@ -342,9 +352,11 @@ io.on('connection', (socket) => {
 
       io.emit(
         'srv-message-addon', {
-          messages: [ ':' + notes.shao[0].src + '烧了' + notes.shao[0].dst + '！' ]
+          messages: [ ':' + notes.names[notes.shao[0].src] + '烧了' + notes.names[notes.shao[0].dst] + '！' ]
         }
       )
+
+      console.log(':' + notes.names[notes.shao[0].src] + '烧了' + notes.names[notes.shao[0].dst] + '！')
 
     }
 
@@ -352,13 +364,14 @@ io.on('connection', (socket) => {
 
       io.emit(
         'srv-message-addon', {
-          messages: [ ':' + payload.name + '解烧' + notes.shao[0].src + '！' ]
+          messages: [ ':' + payload.name + '解烧' + notes.prevHand.name + '！' ]
         }
       )
       
       _.pullAt(notes.shao, 0)
 
-
+      console.log(':' + payload.name + '解烧' + notes.prevHand.name + '！')
+      console.log(cards)
     }
 
     if (core.isHandShaoGoOn(notes, payload)) {
@@ -369,6 +382,7 @@ io.on('connection', (socket) => {
           }
         )
       }
+      console.log(`:${payload.name}烧牌不带王？扣币！`)
     }
 
     if (core.isHandShaoInit(notes, payload)) {
@@ -379,14 +393,16 @@ io.on('connection', (socket) => {
 
       io.emit(
         'srv-message-addon', {
-          messages: [ ':' + notes.shao[0].src + '要烧' + notes.shao[0].dst + '！' ]
+          messages: [ ':' + payload.name + '要烧' + notes.prevHand.name + '！' ]
         }
       )
 
+      console.log(':' + payload.name + '要烧' + notes.prevHand.name + '！')
     }
 
     // 判断闷人
     if (core.isHandMens(notes, payload, cards)) {
+      notes.status[notes.prevHand.id] = 'ende'
       notes.mens.push({
         src: payload.id, dst: notes.prevHand.id
       })
@@ -395,6 +411,7 @@ io.on('connection', (socket) => {
           messages: [ ':' + payload.name + '闷了' + notes.prevHand.name ] 
         }
       )
+      console.log(':' + payload.name + '闷了' + notes.prevHand.name)
       io.emit(
         'srv-user-hand-show', {
           id: notes.prevHand.id, cards: cards[notes.prevHand.id], cardsIndex: 0
@@ -402,8 +419,9 @@ io.on('connection', (socket) => {
       )
       cards[notes.prevHand.id] = []
       for (let i = 5; i > -1; i--) {
-        if (_.isUndefined(notes.lake.indexOf(i))) {
+        if (notes.lake.indexOf(i) === -1) {
           notes.lake[notes.prevHand.id] = i
+          break
         }          
       }
       notes.numAck -= 1
@@ -415,9 +433,11 @@ io.on('connection', (socket) => {
     // 判断科落 -> 判断牌局结束
     if (core.isHandLake(notes, payload)) {
 
+      notes.status[payload.id] = 'ende'
+
       if (cards[payload.id].length === 0) {
         for (let i = 0; i < 6; i++) {
-          if (_.isUndefined(notes.lake.indexOf(i))) {
+          if (notes.lake.indexOf(i) === -1) {
             notes.lake[payload.id] = i
           }
         }
@@ -425,8 +445,6 @@ io.on('connection', (socket) => {
         console.log('set-user-hand-cout|core.isHandLake|sth. wrong? 3 must be out at last.')
       }
       
-      notes.status[payload.id] = 'ende'
-
       notes.numAck -= 1
 
       seatsHandsEndeProcess(io, socket, payload)
@@ -438,7 +456,9 @@ io.on('connection', (socket) => {
     
     io.emit('srv-hands-next', { id: asksId })
 
-    console.log('set-user-hand-cout|ende status:', notes.status)
+    console.log('set-user-hand-cout|ende: ' + notes.status)
+
+    console.log(`set-user-hand-cout|next: ${asksId}`)
 
   })
 
@@ -472,7 +492,7 @@ io.on('connection', (socket) => {
 
   // set-cards
   //  require by app-test.js
-  // socket.on('set-cards', (payload) => { cards = payload })
+  socket.on('set-cards', (payload) => { cards = payload })
 
   // disconnect
   socket.on('disconnect', () => {
@@ -508,10 +528,12 @@ function seatsHandsEndeProcess (io, socket, payload) {
   io.emit(
     'srv-messages-addon', {
       messages: [ 
-        ':' + '恭喜' + payload.name + '拿到' + core.lakeStr[notes.lake[payload.id]]
+        ':' + payload.name + '拿到' + core.lakeStr[notes.lake[payload.id]]
       ]
     }
   )
+
+  console.log(':' + payload.name + '拿到' + core.lakeStr[notes.lake[payload.id]])
 
   console.log('seats: ', seats)
   
@@ -529,7 +551,7 @@ function seatsHandsEndeProcess (io, socket, payload) {
       idx = (payload.id + i) % 6 
       if (!_.isEmpty(cards[idx])) {
         for (let j = 0; j < 6; j++) {
-          if (_.isUndefined(notes.lake.indexOf(i))) {
+          if (notes.lake.indexOf(i) === -1) {
             notes.lake[idx] = j
           }
         }
