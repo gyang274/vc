@@ -21,11 +21,11 @@ export default new Vuex.Store({
     }
   },
   getters: {
-    // eslint-disable-next-line 
+    // eslint-disable-next-line
     socket: (state, getters) => {
       return state.socket
     },
-    // eslint-disable-next-line 
+    // eslint-disable-next-line
     user: (state, getters) => {
       return state.user
     }

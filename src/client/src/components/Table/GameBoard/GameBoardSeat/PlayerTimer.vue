@@ -17,7 +17,7 @@
     props: {
       seconds: {
         type: Number,
-        default: 10,
+        default: 30,
       },
       isOnAction: {
         type: Boolean,

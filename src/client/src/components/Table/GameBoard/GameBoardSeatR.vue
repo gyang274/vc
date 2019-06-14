@@ -88,10 +88,13 @@
         default: 'wait'
       },
       note: {
-        type: Array,
-        default: () => ([
-
-        ])
+        type: Object,
+        default: () => ({
+          dian: [false, false],
+          shao: [false, false],
+          mens: [false, false],
+          lake: [false, false],
+        })
       },
       cards: {
         type: Array,

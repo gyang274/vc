@@ -5,6 +5,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[3]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(3)"
           @action-stand-up="actionStandUp(3)"
         ></apps-room-table-seat>
@@ -23,6 +24,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[4]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(4)"
           @action-stand-up="actionStandUp(4)"
         ></apps-room-table-seat>
@@ -31,6 +33,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[2]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(2)"
           @action-stand-up="actionStandUp(2)"
         ></apps-room-table-seat>      
@@ -39,6 +42,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[5]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(5)"
           @action-stand-up="actionStandUp(5)"
         ></apps-room-table-seat>      
@@ -47,6 +51,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[1]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(1)"
           @action-stand-up="actionStandUp(1)"
         ></apps-room-table-seat>      
@@ -59,6 +64,7 @@
       <v-flex xs4>
         <apps-room-table-seat 
           :username="usernames[0]"
+          :isSeated="isSeated"
           @action-sit-down="actionSitDown(0)"
           @action-stand-up="actionStandUp(0)"
         ></apps-room-table-seat>
@@ -89,6 +95,7 @@
       usernames: [
         '', '', '', '', '', '',
       ],
+      isSeated: false,
     }),
     computed: {
       ...mapGetters({
@@ -103,17 +110,20 @@
         this.setUserAttr({seat: seatindex})
         this.$set(this.usernames, seatindex, this.user.name)
         this.socket.emit('set-user-seat-sit-down', {id: seatindex})
+        this.isSeated = true
       },
       actionStandUp (seatindex) {
         this.setUserAttr({seat: -1})
         this.$set(this.usernames, seatindex, '')
         this.socket.emit('set-user-seat-stand-up', {id: seatindex})
+        this.isSeated = false
+        
       }
     },
     created () {
       this.socket.emit(
-        'get-names', {}, (response) => {
-          this.usernames = response
+        'get-users', {}, (response) => {
+          this.usernames = response.names
         }
       )
       this.socket.on('srv-set-seats-sit-down', (payload) => {

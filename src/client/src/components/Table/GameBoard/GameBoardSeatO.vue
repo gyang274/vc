@@ -10,6 +10,7 @@
     </v-flex>
     <v-flex xs3>
       <apps-player-note
+        :note="note"
       ></apps-player-note>
     </v-flex>
     <v-flex xs3></v-flex>
@@ -102,10 +103,13 @@
         default: 'wait'
       },
       note: {
-        type: Array,
-        default: () => ([
-          
-        ])
+        type: Object,
+        default: () => ({
+          dian: [false, false],
+          shao: [false, false],
+          mens: [false, false],
+          lake: [false, false],
+        })
       },
       cards: {
         type: Array,

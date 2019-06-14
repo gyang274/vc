@@ -37,11 +37,12 @@
             <!-- <v-flex xs12>
               <apps-player-hand></apps-player-hand>
             </v-flex> -->
-            <v-flex xs12>
+            <!-- <v-flex xs12>
               <apps-player-timer
                 :isOnAction="true"
               ></apps-player-timer>
-            </v-flex>
+            </v-flex> -->
+            <apps-player-note></apps-player-note>
           </v-layout>
         </v-slide-y-transition>
       </v-container>
@@ -55,23 +56,25 @@
 
   // @ is an alias to /src
   // import Title from '@/components/Title'
-  // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
+  // import GameBoard from '@/components/Table/GameBoard'
+  // import PlayerAction from '@/components/Table/GameBoard/GameBoardSeat/PlayerAction'
   // import PlayerHand from '@/components/Table/GameBoard/GameBoardSeat/PlayerHand'
   // import PlayerHandOut from '@/components/Table/GameBoard/GameBoardSeat/PlayerHandOut'
-  // import PlayerAction from '@/components/Table/GameBoard/GameBoardSeat/PlayerAction'
-  // import GameBoard from '@/components/Table/GameBoard'
-  import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
+  // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
+  import PlayerNote from '@/components/Table/GameBoard/GameBoardSeat/PlayerNote'
+  // import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
 
   export default {
     name: 'apps-test',
     components: {
       // appsTitle: Title,
-      // appsPlayerProfile: PlayerProfile,
+      // appsGameBoard: GameBoard,
+      // appsPlayerAction: PlayerAction,
       // appsPlayerHand: PlayerHand,
       // appsPlayerHandOut: PlayerHandOut,
-      // appsPlayerAction: PlayerAction,
-      // appsGameBoard: GameBoard,
-      appsPlayerTimer: PlayerTimer,
+      // appsPlayerProfile: PlayerProfile,
+      appsPlayerNote: PlayerNote,
+      // appsPlayerTimer: PlayerTimer,
     },
     data: () => ({
       activeCardsIndex: []

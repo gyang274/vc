@@ -1,5 +1,5 @@
 // core.js
-// author: <yg@gyang274@github.com>
+// author: <gyang274@github.com>
 
 const fs = require('fs')
 
@@ -305,7 +305,6 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
     return false
   }
 
-  return false
 }
 
 // getSeatId
@@ -390,18 +389,7 @@ function isHandLake (notes, payload) {
 // setHandNextCask
 function setHandNextCask (notes, payload) {
 
-  let asksId = -1
-  for (let i = 1; i < 3; i++) {
-    asksId = (payload.id + i) % 6
-    if (notes.status[asksId] === 'play') {
-      break
-    }
-  }
-  if (asksId === -1) {
-    asksId = (payload.id + 3) % 6
-  }
-
-  return asksId
+  return setHandNextPass(notes, payload)
 
 }
 
@@ -436,6 +424,7 @@ function setHandNextPass (notes, payload) {
           break
         }
       }
+      // 对家双弃
       if (doubleAsksSeatO) {
         if (payload.id === (notes.currHand.id + 3) % 6) {
           asksId = notes.currHand.id
@@ -448,7 +437,7 @@ function setHandNextPass (notes, payload) {
 
     // 2-4人 -> 顺位依次
     for (let i = 1; i < 6; i++) {
-      asksId = (payload.id + 1) % 6
+      asksId = (payload.id + i) % 6
       if (notes.status[asksId] !== 'ende') {
         break
       }
@@ -504,7 +493,7 @@ function setHandNextCout (notes, payload) {
 
     // 2-4人 -> 顺位依次
     for (let i = 1; i < 6; i++) {
-      asksId = (payload.id + 1) % 6
+      asksId = (payload.id + i) % 6
       if (notes.status[asksId] !== 'ende') {
         break
       }

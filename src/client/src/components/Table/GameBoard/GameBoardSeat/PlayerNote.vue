@@ -66,10 +66,10 @@
     computed: {
       noteColor () {
         return {
-          dian: this.dmslColor(notes.dian),
-          mens: this.dmslColor(notes.mens),
-          shao: this.dmslColor(notes.shao),
-          lake: this.dmslColor(notes.lake),
+          dian: this.dmslColor(this.note.dian),
+          mens: this.dmslColor(this.note.mens),
+          shao: this.dmslColor(this.note.shao),
+          lake: this.dmslColor(this.note.lake),
         }
       }
     },
@@ -82,7 +82,7 @@
         } else if (!dmsl[0] && dmsl[1]) {
           return "rgb(127, 191, 255)"
         } else {
-          return "rgb(248, 248, 248)"
+          return "rgb(63, 223, 63)"
         }
       },
       lakeColor (lake) {
@@ -95,7 +95,7 @@
         } else if (lake === 4 || lake === 5) {
           return "rgb(127, 191, 255)"
         } else {
-          return "rgb(248, 248, 248)"
+          return "rgb(63, 223, 63)"
         }
       }
     },

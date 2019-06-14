@@ -7,6 +7,7 @@
           block 
           class="primary white--text"
           @click.native="actionSitDown()"
+          :disabled="isSeated"
         >
           <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; SIT DOWN
         </v-btn>
@@ -50,7 +51,11 @@
     props: {
       username: {
         type: String,
-        default: ''
+        default: '',
+      },
+      isSeated: {
+        type: Boolean,
+        default: false,
       }
     },
     data: () => ({

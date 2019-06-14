@@ -40,10 +40,8 @@
     name: 'apps-game-board-msgs',
     props: {
       msgs: {
-        type: Array,
-        default: () => ([
-
-        ])
+        type: String,
+        default: '',
       },
       msgsShow: {
         type: Boolean,
@@ -58,7 +56,7 @@
     },
     methods: {
       actionAckl () {
-        this.$emit('actionAckl')
+        this.$emit('action-ackl')
       }
     },
     created () {

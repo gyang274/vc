@@ -92,10 +92,13 @@ io.on('connection', (socket) => {
 
     console.log('set-user-seat-sit-down:', socket.user.name, 'from seat', socket.user.seat, 'to seat', payload)
 
-    if (socket.user.seat !== -1) {
-      seats[socket.user.seat].name = ''
-      seats[socket.user.seat].status = 'room'
-    }
+    // if (socket.user.seat !== -1) {
+    //   seats[socket.user.seat].name = ''
+    //   seats[socket.user.seat].status = 'room'
+    //   socket.broadcast.emit('srv-set-seats-stand-up', {
+    //     id: socket.user.seat, name: socket.user.name
+    //   })
+    // }
 
     socket.user.seat = payload.id
 
@@ -252,7 +255,7 @@ io.on('connection', (socket) => {
         }
       )
       console.log('set-user-hand-exec-ok', message)
-      console.log('xxx', cards[3])
+    
     }
 
   })
@@ -316,19 +319,15 @@ io.on('connection', (socket) => {
     )
 
     // track cout in cards
-    if (payload.id === 3) {
-      console.log('xxxinit', cards[3])
-    }
     _.pullAt(cards[payload.id], payload.cardsIndex)
     cards[payload.id] = _.sortBy(cards[payload.id], ['rnum', 'snum'])
-    if (payload.id === 3) {
-      console.log('xxxleft', cards[3])
-    }
     
     // track cout in notes
     if (notes.hands.length >= 1) {
       notes.prevHand = notes.currHand
-      notes.status[notes.prevHand.id] = 'play'
+      if (notes.status[notes.prevHand.id] !== 'ende') {
+        notes.status[notes.prevHand.id] = 'play'
+      }
     }
     
     notes.currHand = {

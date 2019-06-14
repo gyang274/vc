@@ -130,6 +130,8 @@
   // eslint-disable-next-line
   import { mapGetters, mapActions } from 'vuex'
 
+  import core from '@/plugins/core'
+
   import Messager from '@/components/Messager'
 
   import GameBoardMsgs from './GameBoard/GameBoardMsgs'
@@ -256,7 +258,7 @@
       },
       actionCask () {
         let cardsOutIndex = _.findIndex(
-          this.cardsOut, (co) => { co !== [] }
+          this.cardsOut, (co) => { return !_.isEmpty(co) }
         )
         if (cardsOutIndex === 3) {
           this.socket.emit('set-user-hand-cask', {
@@ -279,12 +281,13 @@
           // if prevCardsOut not from self and is not 3 (接风), must beaten
           let prevCardsOutIndex = -1
           for (let i = 0; i < 6; i++) {
-            if (!_.isEmpty(cardsOut[i])) {
+            if (!_.isEmpty(this.cardsOut[i])) {
               prevCardsOutIndex = i; break
             }
           }
-          if (prevCardsOutIndex > 0 && cardsOut[prevCardsOutIndex][0].rank !== '3') {
-            isCardsOfHandOk = isCardsOfHandOk && this.isCardsOutBeatenPrevCardsOut(cardsOfHand, cardsOut[prevCardsOutIndex])
+          if (prevCardsOutIndex > 0 && this.cardsOut[prevCardsOutIndex][0].rank !== '3') {
+            console.log('actionCout:', prevCardsOutIndex, cardsOfHand, this.cardsOut[prevCardsOutIndex])
+            isCardsOfHandOk = isCardsOfHandOk && core.isCardsOutBeatenPrevCardsOut(cardsOfHand, this.cardsOut[prevCardsOutIndex])
           }
           // cardsOfHand is ok
           if (isCardsOfHandOk) {
@@ -315,8 +318,10 @@
         }
       },
       actionTimeUp () {
-        console.log('action-time-up call action pass')
-        this.actionPass()
+        // TODO:
+        // if user is cout then auto cout smallest set of cards beside 3, 4 else this.actionPass() 
+        this.msgs = '-超时了！墨墨唧唧只会让牌友与您渐行渐远！'
+        this.msgsShow = true
       },
       actionCardActivate (idx) {
         let index = this.cardsActiveIndex.indexOf(idx);
@@ -344,76 +349,13 @@
         }
 
       },
-      // check cardsOut (cardsOfHand) can beat previous cardsOut (cardsOut), assume cardsOut is valid
-      isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
-        
-        let numCardsByRank = _.countBy(cardsOut, 'rank')
-
-        let ranks = Object.keys(numCardsByRank)
-
-        // let numCards = _.sum(Object.values(numCardsByRank))
-
-        let prevNumCardsByRank = _.countBy(prevCardsOut, 'rank')
-
-        let prevRanks = Object.keys(prevNumCardsByRank)
-
-        // let prevNumCards = _.sum(Object.values(prevNumCardsByRank))
-
-        if (prevRanks.includes('0')) {
-          if (numCardsByRank['1'] >= prevNumCardsByRank['0']) {
-            delete prevNumCardsByRank['0']
-            prevRanks = _.pull(prevRanks, '0')
-            numCardsByRank['1'] = numCardsByRank['1'] - prevNumCardsByRank['0']
-            if (numCardsByRank['1'] === 0) {
-              delete numCardsByRank['1']
-              ranks = _.pull(ranks, '1')
-            }
-          } else {
-            return false
-          }
-        } 
-        
-        if (prevRanks.includes('1')) {
-          if (numCardsByRank['2'] >= 3 * prevNumCardsByRank['1']) {
-            delete prevNumCardsByRank['1']
-            prevRanks = _.pull(prevRanks, '0')
-            numCardsByRank['2'] = numCardsByRank['2'] - 3 * prevNumCardsByRank['1']
-            if (numCardsByRank['2'] === 0) {
-              delete numCardsByRank['2']
-              ranks = _.pull(ranks, '2')
-            }
-          } else {
-            return false
-          }
-        }
-
-        if (prevRanks.includes['2'] && prevRanks.length === 1) {
-          if (numCardsByRank['0'] + numCardsByRank['1'] === prevNumCardsByRank['2'] 
-          && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
-          ) {
-            return true
-          } else {
-            return false
-          }
-        }
-
-        if (_.min(_.map(ranks, r => rankNum[r])) > _.min(_.map(prevRanks, r => rankNum[r]))
-        && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
-        ) {
-          return true
-        } else {
-          return false
-        }
-
-        return false
-      },
     },
     created () {
       this.socket.emit('get-users', {}, (response) => {
         // assign to usernames according to user.name and user.seat matches with response
         console.log('get-users:', response)
         this.usernames = response.names.concat(response.names.splice(0, this.user.seat))
-        this.userinfos = response.names.concat(response.names.splice(0, this.user.seat))
+        this.userinfos = response.infos.concat(response.names.splice(0, this.user.seat))
         console.log('get-users|usernames:', this.usernames)
         console.log('get-users|userinfos:', this.userinfos)
       })
@@ -433,11 +375,13 @@
         ]
       })
       this.socket.on('srv-user-hand-exec', (payload) => {
-        if (this.user.seat === payload.id) {
+        console.log('srv-user-hand-exec|payload:', payload)
+        if (this.user.seat === payload.jd) {
           this.cards = _.sortBy(
             this.cards.concat(payload.cards), ['rnum', 'snum']
           )
         }
+        console.log(this.cards)
       })
       // eslint-disable-next-line
       this.socket.on('srv-hands-play', (payload) => {
@@ -469,7 +413,8 @@
         if (index === 0) {
           // server triggered this user hand cout, e.g., mens, [TODO] time up, [TODO] disconnect
           payload.cards = _.reverse(_.sortBy(payload.cards), ['rnum', 'snum'])
-          for (cd of payload.cards) {
+          let cdidx = -1
+          for (let cd of payload.cards) {
             cdidx = _.findLastIndex(this.cards, cd)
             if (cdidx === -1) {
               console.log(
@@ -484,7 +429,7 @@
         this.$set(this.cardsOut, index, payload.cards)
       })
       this.socket.on('srv-user-note', (payload) => {
-        for (nt of payload) {
+        for (let nt of payload) {
           this.$set(this.notes[nt.id][nt.dmsl], nt.kb, nt.kd)
         }
       })
