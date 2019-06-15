@@ -29,7 +29,21 @@
       cards: {
         type: Array,
         default: () => ([
-
+          {suit: 'C', rank: '3'},
+          {suit: 'D', rank: '4'},
+          {suit: 'H', rank: '5'},
+          {suit: 'S', rank: '6'},
+          {suit: 'C', rank: '7'},
+          {suit: 'D', rank: '8'},
+          {suit: 'H', rank: '9'},
+          {suit: 'S', rank: '10'},
+          {suit: 'C', rank: 'J'},
+          {suit: 'D', rank: 'Q'},
+          {suit: 'H', rank: 'K'},
+          {suit: 'S', rank: 'A'},
+          {suit: 'S', rank: '2'},
+          {suit: 'T', rank: '0'},
+          {suit: 'T', rank: '1'},
         ])
       },
       isFaceDown: {

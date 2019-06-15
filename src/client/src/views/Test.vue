@@ -42,7 +42,18 @@
                 :isOnAction="true"
               ></apps-player-timer>
             </v-flex> -->
-            <apps-player-note></apps-player-note>
+            <v-flex xs12>
+              <apps-player-hand
+                :isFaceDown="false"
+              ></apps-player-hand>
+            </v-flex>
+            <v-flex xs12>
+              <div class="text-xs-center">
+                <apps-player-note
+                  :note="note"
+                ></apps-player-note>
+              </div>
+            </v-flex>
           </v-layout>
         </v-slide-y-transition>
       </v-container>
@@ -58,7 +69,7 @@
   // import Title from '@/components/Title'
   // import GameBoard from '@/components/Table/GameBoard'
   // import PlayerAction from '@/components/Table/GameBoard/GameBoardSeat/PlayerAction'
-  // import PlayerHand from '@/components/Table/GameBoard/GameBoardSeat/PlayerHand'
+  import PlayerHand from '@/components/Table/GameBoard/GameBoardSeat/PlayerHand'
   // import PlayerHandOut from '@/components/Table/GameBoard/GameBoardSeat/PlayerHandOut'
   // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
   import PlayerNote from '@/components/Table/GameBoard/GameBoardSeat/PlayerNote'
@@ -70,14 +81,19 @@
       // appsTitle: Title,
       // appsGameBoard: GameBoard,
       // appsPlayerAction: PlayerAction,
-      // appsPlayerHand: PlayerHand,
+      appsPlayerHand: PlayerHand,
       // appsPlayerHandOut: PlayerHandOut,
       // appsPlayerProfile: PlayerProfile,
       appsPlayerNote: PlayerNote,
       // appsPlayerTimer: PlayerTimer,
     },
     data: () => ({
-      activeCardsIndex: []
+      note: {
+        dian: [true, true],
+        mens: [true, false],
+        shao: [false, true],
+        lake: [false, false],
+      }
     }),
     computed: {
       ...mapGetters({
@@ -88,23 +104,6 @@
       ...mapActions({
         
       }),
-      activateCards (payload) {
-        console.log('activateCards:', this.activeCardsIndex = payload)
-      },
-      actionPass () {
-        console.log(
-          'user', this.user.name, 
-          'at seat', this.user.seat,
-          'action-pass', this.activeCardsIndex,
-          'remember to reset activeCards to []'
-        )
-      },
-      actionAsk () {
-        console.log('action ask')
-      },
-      actionOut () {
-        console.log('action out')
-      }
     },
     created () {
       

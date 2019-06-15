@@ -28,20 +28,7 @@
       cards: {
         type: Array,
         default: () => ([
-          {suit: 'C', rank: 'K'},
-          {suit: 'D', rank: 'K'},
-          {suit: 'H', rank: 'K'},
-          {suit: 'S', rank: 'K'},
-          {suit: 'C', rank: 'A'},
-          {suit: 'D', rank: 'A'},
-          {suit: 'H', rank: 'A'},
-          {suit: 'S', rank: 'A'},
-          {suit: 'C', rank: '2'},
-          {suit: 'D', rank: '2'},
-          {suit: 'H', rank: '2'},
-          {suit: 'S', rank: '2'},
-          {suit: 'T', rank: '0'},
-          {suit: 'T', rank: '1'},
+
         ])
       },
       isFaceDown: {

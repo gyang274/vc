@@ -76,28 +76,15 @@
     methods: {
       dmslColor (dmsl) {
         if (dmsl[0] && dmsl[1]) {
-          return "rgb(255, 191, 127)"
+          return "rgb(224, 32, 224)"
         } else if (dmsl[0] && !dmsl[1]) {
-          return "rgb(255, 127, 127)"
+          return "rgb(224, 32, 32)"
         } else if (!dmsl[0] && dmsl[1]) {
-          return "rgb(127, 191, 255)"
+          return "rgb(224, 128, 32)"
         } else {
-          return "rgb(63, 223, 63)"
+          return "rgb(32, 128, 224)"
         }
       },
-      lakeColor (lake) {
-        if (lake === -1) {
-          return "rgb(248, 248, 248)"
-        } else if (lake === 0 || lake === 1) {
-          return "rgb(255, 127, 127)"
-        } else if (lake === 2 || lake === 3) {
-          return "rgb(255, 191, 127)"
-        } else if (lake === 4 || lake === 5) {
-          return "rgb(127, 191, 255)"
-        } else {
-          return "rgb(63, 223, 63)"
-        }
-      }
     },
     created () {
 

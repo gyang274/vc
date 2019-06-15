@@ -4,7 +4,7 @@
       <v-avatar
         :tile="tile"
         :size="avatarSize"
-        :color="'rgb(255, 191, 127)'"
+        :color="'rgb(224, 32, 32)'"
         class="white--text"
       >
         <h1>{{ username.slice(0, 2).toUpperCase() }}</h1>
