@@ -1,5 +1,5 @@
 module.exports = {
-  outputDir: '../../../vc-hk/dist',
+  outputDir: '../server/dist',
   assetsDir: 'static',
   css: {
     loaderOptions: {
