@@ -6,21 +6,22 @@
           class="headline grey lighten-2"
           primary-title
         >
-          战局统计
+          战局统计 - 系统提示您：素质游戏，自觉进贡！
         </v-card-title>
         <v-card-text>
           <v-data-table
             :headers="headers"
             :items="contents"
             class="elevation-1"
+            hide-actions
           >
             <template v-slot:items="props">
-              <td>{{ props.item.name }}</td>
-              <td class="text-xs-center">{{ props.item.dian }}</td>
-              <td class="text-xs-center">{{ props.item.mens }}</td>
-              <td class="text-xs-center">{{ props.item.shao }}</td>
-              <td class="text-xs-center">{{ props.item.lake }}</td>
-              <td class="text-xs-center">{{ props.item.points }}</td>
+              <td><h2>{{ props.item.name }}</h2></td>
+              <td class="text-xs-center"><h2>{{ props.item.dian }}</h2></td>
+              <td class="text-xs-center"><h2>{{ props.item.mens }}</h2></td>
+              <td class="text-xs-center"><h2>{{ props.item.shao }}</h2></td>
+              <td class="text-xs-center"><h2>{{ props.item.lake }}</h2></td>
+              <td class="text-xs-center"><h2>{{ props.item.points }}</h2></td>
             </template>
           </v-data-table>
         </v-card-text>
@@ -28,11 +29,12 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn
-            color="primary white--text"
+            block
+            class="primary--text text-xs-center"
             flat
-            @click="actionAckl()"
+            @click.native="actionAckl()"
           >
-            不服！再战！
+            <h2>不服？决战到天明！</h2>
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -49,27 +51,27 @@
         default: () => ([
           {
             text: '昵称',
-            align: 'left',
+            align: 'center',
             sortable: false,
             value: 'name'
           },
-          { text: '点', value: 'dian' },
-          { text: '闷', value: 'mens' },
-          { text: '烧', value: 'shao' },
-          { text: '落', value: 'lake' },
-          { text: '积分', value: 'points' },
+          { text: '点', value: 'dian', align: 'center', sortable: false, },
+          { text: '闷', value: 'mens', align: 'center', sortable: false, },
+          { text: '烧', value: 'shao', align: 'center', sortable: false, },
+          { text: '落', value: 'lake', align: 'center', sortable: false, },
+          { text: '积分', value: 'points', align: 'center', sortable: false, },
         ])
       },
       contents: {
         type: Array,
         default: () => ([
           {
-            name: 'yg',
-            dian: '开点',
-            mens: '闷人',
-            shao: '烧人',
-            lake: '头科',
-            points: 8
+            name: '',
+            dian: '',
+            mens: '',
+            shao: '',
+            lake: '',
+            points: 0
           },
         ])
       }

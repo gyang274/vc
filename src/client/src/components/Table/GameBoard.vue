@@ -1,7 +1,7 @@
 <template>
   <v-container fluid
     :style="{
-      'background-color': 'rgb(63, 192, 63)'
+      'background-color': 'rgb(185, 224, 217)'
     }"
   >
     <v-layout row wrap>
@@ -41,12 +41,12 @@
       </v-flex>
       <!-- 信息中心 -->
       <v-flex xs4 
-        v-if="_.every(status, s => { s === 'ende' || s === 'waitOk' }) && status[0] === 'ende'"
+        v-if="!_.isEmpty(news)"
       >
+      <!-- <v-flex xs4> -->
         <apps-game-board-news
-          :news="news"
-          :newsShow="newsShow"
-          @action-ackl="newsShow = false"
+          :contents="news"
+          @action-ackl="news = []"
         ></apps-game-board-news>
       </v-flex>
       <v-flex xs4 v-else><br><br><br><br><br></v-flex>
@@ -107,7 +107,7 @@
       <v-flex xs2>
         <br><br>
         <apps-messager
-          :backgroundColor="'rgb(63, 192, 63)'"
+          :backgroundColor="'rgb(167, 206, 217)'"
         ></apps-messager>
         <br><br>
       </v-flex>
@@ -199,8 +199,11 @@
         false, false, false, false, false, false,
       ],
       // GameResults
-      news: '',
-      newsShow: false,
+      news: [
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+      ],
+      // newsShow: false,
       // LocalMessages
       msgs: '',
       msgsShow: false,
@@ -219,6 +222,7 @@
         setUserAttr: 'setUserAttr'
       }),
       actionWaitOk () {
+        this.news = []
         this.$set(this.status, 0, 'waitOk')
         this.socket.emit('set-user-hand-wait-ok', {
           id: this.user.seat, name: this.user.name
@@ -252,11 +256,13 @@
         }
       },
       actionPass () {
+        this.cardsActiveIndex = []
         this.socket.emit('set-user-hand-pass', {
           id: this.user.seat, name: this.user.name,
         })
       },
       actionCask () {
+        this.cardsActiveIndex = []
         let cardsOutIndex = _.findIndex(
           this.cardsOut, (co) => { return !_.isEmpty(co) }
         )
@@ -279,6 +285,7 @@
             isCardsOfHandOk = isCardsOfHandOk && _.isEmpty(this.cards)
           }
           // if prevCardsOut not from self and is not 3 (接风), must beaten
+          // TODO: if prevCardsOut is 3, must everyone pass (need everyone playing status..)
           let prevCardsOutIndex = -1
           for (let i = 0; i < 6; i++) {
             if (!_.isEmpty(this.cardsOut[i])) {
@@ -286,7 +293,6 @@
             }
           }
           if (prevCardsOutIndex > 0 && this.cardsOut[prevCardsOutIndex][0].rank !== '3') {
-            console.log('actionCout:', prevCardsOutIndex, cardsOfHand, this.cardsOut[prevCardsOutIndex])
             isCardsOfHandOk = isCardsOfHandOk && core.isCardsOutBeatenPrevCardsOut(cardsOfHand, this.cardsOut[prevCardsOutIndex])
           }
           // cardsOfHand is ok
@@ -313,7 +319,8 @@
               this.cards.concat(cardsOfHand), ['rnum', 'snum']
             )
             // transient message
-            this.msgs += ['您这手牌打不出去啊！愣打您会被揍的！']
+            this.msgs = '打不出去的牌请不要愣打好嘛！'
+            this.msgsShow = true
           }
         }
       },
@@ -375,13 +382,11 @@
         ]
       })
       this.socket.on('srv-user-hand-exec', (payload) => {
-        console.log('srv-user-hand-exec|payload:', payload)
         if (this.user.seat === payload.jd) {
           this.cards = _.sortBy(
             this.cards.concat(payload.cards), ['rnum', 'snum']
           )
         }
-        console.log(this.cards)
       })
       // eslint-disable-next-line
       this.socket.on('srv-hands-play', (payload) => {
@@ -406,6 +411,12 @@
 
       })
       this.socket.on('srv-user-hand-cout', (payload) => {
+        // payload.show = true when show mens 3 etc.
+        // if (!payload.show) {
+        //             this.cardsOut = [
+        //     [], [], [], [], [], []
+        //   ]
+        // }
         this.cardsOut = [
           [], [], [], [], [], []
         ]
@@ -429,8 +440,10 @@
         this.$set(this.cardsOut, index, payload.cards)
       })
       this.socket.on('srv-user-note', (payload) => {
+        let id = -1
         for (let nt of payload) {
-          this.$set(this.notes[nt.id][nt.dmsl], nt.kb, nt.kd)
+          id = (nt.id - this.user.seat + this.usernames.length) % this.usernames.length
+          this.$set(this.notes[id][nt.dmsl], nt.kb, nt.kd)
         }
       })
       this.socket.on('srv-user-hand-ende', (payload) => {
@@ -440,16 +453,25 @@
       this.socket.on('srv-hands-ende', (payload) => {
         console.log('srv-hands-ende', payload)
         this.news = payload.news
-        this.newsShow = true
         this.cards = []
         this.cardsOut = [
           [], [], [], [], [], [], 
         ],
+        this.notes = [  
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+          { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
+        ]
+        this.isOnAction = [
+        false, false, false, false, false, false,
+        ]
         this.status = [
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 
         ]
         this.userinfos = payload.userinfos.concat(payload.userinfos.splice(0, this.user.seat))
-        
       })
     },
     mounted () {

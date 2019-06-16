@@ -9,7 +9,7 @@
           @click.native="actionSitDown()"
           :disabled="isSeated"
         >
-          <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; SIT DOWN
+          <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; <h2>SIT DOWN</h2>
         </v-btn>
       </v-flex>
     </template>
@@ -17,7 +17,7 @@
     <template v-else-if="username === user.name">
       <v-flex xs6>
         <v-btn block outline class="primary primary--text">
-          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ username }}
+          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; <h2>{{ username }}</h2>
         </v-btn>
       </v-flex>
       <v-flex xs6>
@@ -26,7 +26,7 @@
           class="primary white--text"
           @click.native="actionStandUp()"
         >
-          <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; STAND UP
+          <v-icon dark>whatshot</v-icon>&nbsp;&nbsp; <h2>STAND UP</h2>
         </v-btn>
       </v-flex>
     </template>
@@ -34,7 +34,7 @@
     <template v-else>
       <v-flex xs12>
         <v-btn block outline class="primary primary--text">
-          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; {{ username }}
+          <v-icon>videogame_asset</v-icon>&nbsp;&nbsp; <h2>{{ username }}</h2>
         </v-btn>
       </v-flex>
     </template>

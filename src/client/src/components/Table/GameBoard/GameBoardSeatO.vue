@@ -23,7 +23,7 @@
           class="primary white--text"
           :disabled="status === 'waitOk'"
         >
-          开始
+          <h2>开始</h2>
         </v-btn>
       </v-flex>
       <v-flex xs3></v-flex>

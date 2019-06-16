@@ -7,7 +7,7 @@
         @click.native="actionWaitOk()"
         :disabled="status === 'waitOk'"
       >
-        Let's Play - 开始
+        <h2>Let's Play - 开始</h2>
       </v-btn>
     </v-flex>
     <v-flex xs12 v-show="status === 'exec' || status === 'execOk'">
@@ -22,7 +22,7 @@
             @click.native="actionExec()"
           >
           <!-- :disabled="status === 'execOk'" -->
-            买3/买4/贡牌
+            <h2>买3/买4/贡牌</h2>
           </v-btn>
         </v-flex>
         <v-flex xs4 px-1>
@@ -32,7 +32,7 @@
             @click.native="actionExecOk()"
             :disabled="status === 'execOk'"
           >
-            开打
+            <h2>开打</h2>
           </v-btn>
         </v-flex>
       </v-layout>
@@ -46,7 +46,27 @@
             :disabled="!isOnAction || status === 'ende'"
             @click.native="actionPass()"
           >
-            过牌
+            <h2>过牌</h2>
+          </v-btn>
+        </v-flex>
+        <v-flex xs2 px-2>
+          <v-btn 
+            block 
+            class="primary white--text"
+            :disabled="!isOnAction || status === 'ende'"
+            @click.native="actionCask()"
+          >
+            <h2>让牌</h2>
+          </v-btn>
+        </v-flex>
+        <v-flex xs2 px-2>
+          <v-btn 
+            block 
+            class="primary white--text"
+            :disabled="status === 'ende'"
+            @click.native="actionCout()"
+          >
+            <h2>烧牌</h2>
           </v-btn>
         </v-flex>
         <v-flex xs4 px-2>
@@ -54,19 +74,9 @@
             block 
             class="primary white--text"
             :disabled="!isOnAction || status === 'ende'"
-            @click.native="actionCask()"
-          >
-            让牌
-          </v-btn>
-        </v-flex>
-        <v-flex xs4 px-2>
-          <v-btn 
-            block 
-            class="primary white--text"
-            :disabled="status === 'ende'"
             @click.native="actionCout()"
           >
-            出牌
+            <h2>出牌</h2>
           </v-btn>
         </v-flex>
       </v-layout>

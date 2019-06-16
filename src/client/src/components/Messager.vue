@@ -38,7 +38,7 @@
       },
       height: {
         type: String,
-        default: '26rem',
+        default: '34rem',
       }
     },
     data: () => ({

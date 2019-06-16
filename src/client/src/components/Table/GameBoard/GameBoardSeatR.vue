@@ -8,7 +8,7 @@
           class="primary white--text"
           :disabled="status === 'waitOk'"
         >
-          开始
+          <h2>开始</h2>
         </v-btn>
       </v-flex>
     </template>
@@ -48,6 +48,7 @@
       ></apps-player-profile>
       <br>
       <apps-player-note
+        :note="note"
       ></apps-player-note>
     </v-flex>
   </v-layout>

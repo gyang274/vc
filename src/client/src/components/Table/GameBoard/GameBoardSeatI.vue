@@ -57,6 +57,7 @@
     </v-flex>
     <v-flex xs3>
       <apps-player-note
+        :note="note"
       ></apps-player-note>
     </v-flex>
     <v-flex xs3></v-flex>

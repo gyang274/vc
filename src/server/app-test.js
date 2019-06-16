@@ -11,7 +11,7 @@ let usernames = [
 ]
 
 let sockets = [
-  [], [], [], [], [], [], 
+  
 ]
 
 let cards = [
@@ -27,10 +27,10 @@ let status = [
 ]
 
 
-async function init () {
-  for (let i = 0; i < 6; i++) {
-    sockets[i] = io.connect('http://127.0.0.1:3000')
-  }  
+async function init (numNPC = 6) {
+  for (let i = 0; i < numNPC; i++) {
+    sockets.push(io.connect('http://127.0.0.1:3000'))
+  }
 }
 
 // set names
@@ -58,21 +58,21 @@ async function setSeats () {
     }
   )
 
-  await sleep(100)
+  // await sleep(100)
 
-  for (i of [2, 5]) {
-    sockets[i].emit(
-      'set-user-seat-stand-up', {id: i}
-    )
-  }
+  // for (i of [2, 3]) {
+  //   sockets[i].emit(
+  //     'set-user-seat-stand-up', {id: i}
+  //   )
+  // }
 
-  await sleep(100)
+  // await sleep(100)
   
-  for (i of [2, 5]) {
-    sockets[i].emit(
-      'set-user-seat-sit-down', {id: i}
-    )
-  }
+  // for (i of [2, 3]) {
+  //   sockets[i].emit(
+  //     'set-user-seat-sit-down', {id: i}
+  //   )
+  // }
   
 }
 
@@ -92,7 +92,7 @@ async function getNames () {
 }
 
 // action waitOk
-async function actionWaitOk (isCardsTest = true) {
+async function actionWaitOk () {
 
   sockets.forEach(
     (socket, index) => {
@@ -101,14 +101,6 @@ async function actionWaitOk (isCardsTest = true) {
       })
     }
   )
-
-  // action waitOk -> srv-hands-init
-  await sleep(100)
-
-  // set cards for consistent cards
-  if (isCardsTest) {
-    await setCardsTest()
-  }
 
   await sleep(100)
 
@@ -125,8 +117,6 @@ async function actionWaitOk (isCardsTest = true) {
 // action exec
 async function actionExec (rk = '3') {
 
-  console.log('actionExec|cardsInit:', cards)
-
   // count how many rk = '3' on each player hand
   countOfRk = []
   for (let i = 0; i < 6; i++) {
@@ -138,7 +128,7 @@ async function actionExec (rk = '3') {
       countOfRk.push(0)
     }
   }
-  console.log('actionExec|countOfRk:', rk, countOfRk)
+  
   indexNeedRk = []
   for (let i = 0; i < 6; i++) {
     if (countOfRk[i] === 0) {
@@ -170,7 +160,7 @@ async function actionExec (rk = '3') {
     }
   }
   await sleep(100)
-  console.log('actionExec|cardsExec:', cards)
+  
 }
 
 // action execOk
@@ -261,102 +251,6 @@ async function actionPass (id) {
   )
 }
 
-// unit test case
-async function setCardsTest () {
-
-  // set-cards
-  cards = [
-    // id 0
-    [
-      { suit:  'S', rank: '3' },
-      { suit:  'S', rank: '3' },
-      { suit:  'S', rank: '5' },
-      { suit:  'S', rank: '5' },
-      { suit:  'S', rank: '8' },
-      { suit:  'S', rank: '8' },
-      { suit:  'S', rank: '8' },
-      { suit:  'S', rank: '8' },
-      { suit:  'S', rank: '2' },
-      { suit:  'S', rank: '2' },
-      { suit:  'S', rank: '2' },
-      { suit:  'S', rank: '2' },
-      { suit:  'T', rank: '1' },
-    ], 
-    // id 1
-    [
-      { suit: 'S', rank: '3' },
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: '5' },
-      { suit: 'S', rank: '8' },
-      { suit: 'S', rank: 'K' },
-    ],
-    // id 2
-    [
-      { suit: 'S', rank: '3' },
-      { suit: 'S', rank: '3' },
-      { suit: 'S', rank: '8' },
-      { suit: 'S', rank: '8' },
-      { suit: 'S', rank: 'A' },
-      { suit: 'S', rank: 'A' },
-
-
-      { suit: 'S', rank: '10' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      
-    ],
-    // id 3
-    [
-      { suit: 'S', rank: '3' },
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: '7' },
-      { suit: 'S', rank: '7' },
-      { suit: 'S', rank: '7' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '2' },
-      { suit: 'T', rank: '1' },
-    ],
-    // id 4
-    [
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: 'Q' },
-      { suit: 'S', rank: 'Q' },
-      { suit: 'S', rank: 'Q' },
-      { suit: 'S', rank: '2' },
-    ],
-    // id 5
-    [
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: '4' },
-      { suit: 'S', rank: 'K' },
-      { suit: 'S', rank: 'K' },
-      { suit: 'S', rank: '2' },
-      { suit: 'S', rank: '1' },
-    ], 
-  ]
-  
-  cards.forEach(
-    cardsOnHand => cardsOnHand.forEach(
-      cd => {
-        cd.snum = core.suitNum[cd.suit]
-        cd.rnum = core.rankNum[cd.rank]
-      }
-    )
-  )
-
-  cards.forEach(
-    cardsOnHand => _.sortBy(cardsOnHand, ['rnum', 'snum'])
-  )
-
-  sockets[0].emit('set-cards', cards)
-
-}
-
 async function giveUp4d(ids = [2, 3]) {
   // id2 give 4, id3 give up 4
   for (i of ids) {
@@ -372,7 +266,7 @@ async function giveUp4d(ids = [2, 3]) {
   }
 }
 
-async function onGameCout () {
+async function onCardsTestGame () {
 
   await sleep(100); await actionCout(0, ['5', '5'])
 
@@ -412,15 +306,29 @@ async function onGameCout () {
   await sleep(100); await actionCout(3, ['2', '2', '2'])
   await sleep(100); await actionPass(0)
 
-  // optional 解烧带闷
-  await sleep(100); await actionCout(3, ['1', '2', '7', '7', '7'])
-  // await sleep(100); await actionCout(0, ['2', '2', '2', '2', '8', '8', '8', '8'])
-  await sleep(100); await actionPass(0)
+  // 烧牌继续
+  await sleep(100); await actionCout(3, ['1', '5', '5', '5'])
+  // 解烧带闷
+  await sleep(100); await actionCout(0, ['2', '2', '2', '2', 'K', 'K',])
+  // alternative 烧成走人
+  // await sleep(100); await actionPass(0)
+  // await sleep(100); await actionPass(2)
+  // await sleep(100); await actionCout(3, ['3'])
+
+  // 解烧带闷打到结束
+  await sleep(100); await actionCout(0, ['1', '0',])
+  await sleep(100); await actionPass(1)
   await sleep(100); await actionPass(2)
-  await sleep(100); await actionPass(3)
-  await sleep(100); await actionPass(3)
-  await sleep(100); await actionPass(3)
-  await sleep(100); await actionPass(3)
+  await sleep(100); await actionPass(4)
+  await sleep(100); await actionCout(0, ['3',])
+
+  await sleep(100); await actionCout(1, ['5',])
+  await sleep(100); await actionCout(1, ['8',])
+  await sleep(100); await actionCout(1, ['K',])
+  await sleep(100); await actionCout(1, ['2',])
+  await sleep(100); await actionCout(1, ['3',])
+
+  await sleep(100); console.log(cards)
 
 
 }
@@ -451,7 +359,7 @@ async function main () {
 
   await actionExec(rk = '3')
 
-  await actionExec(rk = '4')
+  // await actionExec(rk = '4')
 
   await sleep(100)
 
@@ -463,7 +371,7 @@ async function main () {
 
   await sleep(100)
 
-  await onGameCout()
+  await onCardsTestGame()
 
 }
 
@@ -481,7 +389,7 @@ module.exports = {
   cardsOut,
   status,
   // actions
-  init, 
+  init,
   setNames, 
   setSeats,
   getNames,
@@ -491,6 +399,7 @@ module.exports = {
   actionCout,
   actionCask,
   actionPass,
+  sleep,
   // status
   showCardsOnHand,
   // main

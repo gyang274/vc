@@ -46,8 +46,8 @@ function setDeck () {
 
   function setDeckCore () {
     const suits = ['C', 'D', 'H', 'S']
-    // const ranks = ['5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
-    const ranks = ['5', '8', 'K', '2']
+    // const ranks = ['5', '8', 'K', '2']
+    const ranks = ['5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A', '2']
     let deck = []
     suits.forEach(suit => {
       ranks.forEach(rank => {
@@ -107,6 +107,101 @@ function setCards () {
   }
 
   return cards
+}
+
+
+// setCardsTest
+function setCardsTest () {
+
+  let cards = [
+    [], [], [], [], [], [], 
+  ]
+
+  // set-cards
+  cards = [
+    // id 0
+    [
+      { suit:  'S', rank: '3' },
+      { suit:  'S', rank: '5' },
+      { suit:  'S', rank: '5' },
+      { suit:  'S', rank: 'K' },
+      { suit:  'S', rank: 'K' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'S', rank: '2' },
+      { suit:  'T', rank: '0' },
+      { suit:  'T', rank: '1' },
+    ], 
+    // id 1
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: 'K' },
+      { suit: 'S', rank: '2' },
+    ],
+    // id 2
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: '8' },
+      { suit: 'S', rank: 'A' },
+      { suit: 'S', rank: 'A' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      
+    ],
+    // id 3
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'T', rank: '1' },
+    ],
+    // id 4
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '5' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'S', rank: '2' },
+      { suit: 'T', rank: '1' },
+    ],
+    // id 5
+    [
+      { suit: 'S', rank: '3' },
+      { suit: 'S', rank: '4' },
+      { suit: 'S', rank: 'K' },
+      { suit: 'S', rank: 'K' },
+      { suit: 'S', rank: '2' },
+      { suit: 'T', rank: '1' },
+    ], 
+  ]
+  
+  cards.forEach(
+    cardsOnHand => cardsOnHand.forEach(
+      cd => {
+        cd.snum = suitNum[cd.suit]
+        cd.rnum = rankNum[cd.rank]
+      }
+    )
+  )
+
+  cards.forEach(
+    cardsOnHand => _.sortBy(cardsOnHand, ['rnum', 'snum'])
+  )
+    
+  return cards
+
 }
 
 
@@ -430,6 +525,9 @@ function setHandNextPass (notes, payload) {
           asksId = notes.currHand.id
         } else {
           asksId = (notes.currHand.id + 3) % 6
+          if (notes.status[asksId] === 'ende') {
+            asksId = notes.currHand.id
+          }
         }
       }
     }
@@ -513,7 +611,7 @@ function setHandNextCout (notes, payload) {
 // isGameEnde
 function isGameEnde (notes) {
 
-  return (notes.status[0] === 'ende' && notes.status[2] === 'ende' && notes.status[4] === 'ende')
+  return (notes.status[0] === 'ende' && notes.status[2] === 'ende' && notes.status[4] === 'ende') 
       || (notes.status[1] === 'ende' && notes.status[3] === 'ende' && notes.status[5] === 'ende')
   
 }
@@ -593,8 +691,9 @@ function resNotes (notes) {
 
   notes.mens.forEach(
     (mens) => {
-      news[mens.src].mens += `闷了${mens.dst}！`
-      news[mens.dst].mens -= `被${mens.src}闷！`
+      console.log('notes mens' + `闷了${notes.names[mens.dst]}！` + `被${notes.names[mens.src]}闷！`)
+      news[mens.src].mens += `闷了${notes.names[mens.dst]}！`
+      news[mens.dst].mens += `被${notes.names[mens.src]}闷！`
       news[mens.src].points += 2
       news[mens.dst].points -= 2
     }
@@ -605,8 +704,8 @@ function resNotes (notes) {
 
   notes.shao.forEach(
     (shao) => {
-      news[shao.src].shao += `烧了${shao.dst}！`
-      news[shao.dst].shao -= `被${shao.src}烧！`
+      news[shao.src].shao += `烧了${notes.names[shao.dst]}！`
+      news[shao.dst].shao += `被${notes.names[shao.src]}烧！`
       news[shao.src].points += 2
       news[shao.src].points += 2
     }
@@ -647,7 +746,8 @@ module.exports = {
   lakeNum,
   // functions
   setDeck, 
-  setCards, 
+  setCards,
+  setCardsTest,
   setNotes, 
   resNotes, 
   writeNotes,

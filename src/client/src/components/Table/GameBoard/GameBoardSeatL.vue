@@ -8,6 +8,7 @@
       ></apps-player-profile>
       <br>
       <apps-player-note
+        :note="note"
       ></apps-player-note>
     </v-flex>
     <template v-if="status === 'wait' || status === 'waitOk'">
@@ -17,7 +18,7 @@
           class="primary white--text"
           :disabled="status === 'waitOk'"
         >
-          开始
+          <h2>开始</h2>
         </v-btn>
       </v-flex>
       <v-flex xs5></v-flex>
@@ -127,7 +128,7 @@
         return this.cards
       },
       cardsOfHand () {
-        if (this.isHandEnded) return []
+        if (this.isHandEnded) return [ ]
         return this.cardsOut
       },
     },

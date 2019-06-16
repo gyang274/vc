@@ -11,7 +11,7 @@
               class="headline grey lighten-2"
               primary-title
             >
-              友情提示
+              <h2>友情提示</h2>
             </v-card-title>
             <v-card-text>
               {{ msgs }}
@@ -22,9 +22,9 @@
               <v-btn
                 color="primary white--text"
                 flat
-                @click="actionAckl()"
+                @click.native="actionAckl()"
               >
-                受教了！
+                <h2>受教了！</h2>
               </v-btn>
             </v-card-actions>
           </v-card>

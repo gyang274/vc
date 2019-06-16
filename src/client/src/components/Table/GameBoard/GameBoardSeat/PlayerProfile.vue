@@ -1,14 +1,14 @@
 <template>
   <v-layout>
     <div>
-      <v-avatar
-        :tile="tile"
-        :size="avatarSize"
+      <v-chip
+        :height="'100'"
         :color="'rgb(224, 32, 32)'"
         class="white--text"
+        label
       >
-        <h1>{{ username.slice(0, 2).toUpperCase() }}</h1>
-      </v-avatar>
+        <h1>{{ username }}</h1>
+      </v-chip>
     </div>
     <div>&nbsp;&nbsp;</div>
     <div>
@@ -37,14 +37,6 @@
         default: () => ({
           title: '', coins: 0
         })
-      },
-      tile: {
-        type: Boolean,
-        default: true,
-      },
-      avatarSize: {
-        type: Number,
-        default: 40
       }
     },
     data: () => ({
@@ -68,3 +60,12 @@
     }
   }
 </script>
+
+
+<style scoped>
+
+.v-chip {
+  height: 3rem
+}
+
+</style>

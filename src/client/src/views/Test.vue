@@ -54,6 +54,12 @@
                 ></apps-player-note>
               </div>
             </v-flex>
+            <v-flex xs12>
+              <apps-game-board-news
+                :contents="news"
+                @action-ackl="news = []"
+              ></apps-game-board-news>
+            </v-flex>
           </v-layout>
         </v-slide-y-transition>
       </v-container>
@@ -68,18 +74,20 @@
   // @ is an alias to /src
   // import Title from '@/components/Title'
   // import GameBoard from '@/components/Table/GameBoard'
+  import GameBoardNews from '@/components/Table/GameBoard/GameBoardNews'
   // import PlayerAction from '@/components/Table/GameBoard/GameBoardSeat/PlayerAction'
   import PlayerHand from '@/components/Table/GameBoard/GameBoardSeat/PlayerHand'
   // import PlayerHandOut from '@/components/Table/GameBoard/GameBoardSeat/PlayerHandOut'
   // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
   import PlayerNote from '@/components/Table/GameBoard/GameBoardSeat/PlayerNote'
   // import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
-
+  
   export default {
     name: 'apps-test',
     components: {
       // appsTitle: Title,
       // appsGameBoard: GameBoard,
+      appsGameBoardNews: GameBoardNews,
       // appsPlayerAction: PlayerAction,
       appsPlayerHand: PlayerHand,
       // appsPlayerHandOut: PlayerHandOut,
@@ -93,7 +101,15 @@
         mens: [true, false],
         shao: [false, true],
         lake: [false, false],
-      }
+      },
+      news: [
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
+      ]
     }),
     computed: {
       ...mapGetters({

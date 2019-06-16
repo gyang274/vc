@@ -44,12 +44,13 @@
     props: {
       note: {
         type: Object,
-        default: () => ({
-          dian: [false, false],
-          shao: [false, false],
-          mens: [false, false],
-          lake: [false, false],
-        })
+        // default: () => ({
+        //   dian: [false, false],
+        //   shao: [false, false],
+        //   mens: [false, false],
+        //   lake: [false, false],
+        // })
+        required: true,
       },
       tile: {
         type: Boolean,

@@ -6,7 +6,7 @@
           <v-layout row wrap>
             <v-flex xs12><br><br></v-flex>
             <v-flex xs12>
-              <apps-title title="有桌够级 - 欢迎来玩！"></apps-title>
+              <apps-title title="江湖变换，风云再起，有桌够级 - 来玩！"></apps-title>
             </v-flex>
             <v-flex xs12><br><br></v-flex>
             <!-- user id -->
