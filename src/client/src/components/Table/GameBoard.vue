@@ -199,10 +199,7 @@
         false, false, false, false, false, false,
       ],
       // GameResults
-      news: [
-        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
-        { name: 'yg', dian: '开点', mens: '闷了2', shao: '烧了3', lake: '头科', points: 10 },
-      ],
+      news: [],
       // newsShow: false,
       // LocalMessages
       msgs: '',

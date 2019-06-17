@@ -37,11 +37,11 @@
             <!-- <v-flex xs12>
               <apps-player-hand></apps-player-hand>
             </v-flex> -->
-            <!-- <v-flex xs12>
+            <v-flex xs12>
               <apps-player-timer
                 :isOnAction="true"
               ></apps-player-timer>
-            </v-flex> -->
+            </v-flex>
             <v-flex xs12>
               <apps-player-hand
                 :isFaceDown="false"
@@ -80,7 +80,7 @@
   // import PlayerHandOut from '@/components/Table/GameBoard/GameBoardSeat/PlayerHandOut'
   // import PlayerProfile from '@/components/Table/GameBoard/GameBoardSeat/PlayerProfile'
   import PlayerNote from '@/components/Table/GameBoard/GameBoardSeat/PlayerNote'
-  // import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
+  import PlayerTimer from '@/components/Table/GameBoard/GameBoardSeat/PlayerTimer'
   
   export default {
     name: 'apps-test',
@@ -93,7 +93,7 @@
       // appsPlayerHandOut: PlayerHandOut,
       // appsPlayerProfile: PlayerProfile,
       appsPlayerNote: PlayerNote,
-      // appsPlayerTimer: PlayerTimer,
+      appsPlayerTimer: PlayerTimer,
     },
     data: () => ({
       note: {

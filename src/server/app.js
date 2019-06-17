@@ -567,6 +567,10 @@ io.on('connection', (socket) => {
         name: socket.user.name
       }
     )
+
+    // TODO： check user is playing
+    isGameEndeProcess(io, socket, { id: socket.user.seat, name: socket.user.name })
+
     socket.broadcast.emit(
       'srv-messages-addon', {
         messages: [

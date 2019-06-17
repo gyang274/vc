@@ -8,10 +8,13 @@ import io from 'socket.io-client'
 export default new Vuex.Store({
   state () {
     // set `/server` proxy in vue.config.js
-    // const socket = io('http://127.0.0.1:3000', { 
-    //   autoConnect: true 
-    // })
-    const socket = io()
+    const socket = (
+      process.env.NODE_ENV === 'development'
+    ) ? io(
+      'http://127.0.0.1:3000', { autoConnect: true }
+    ) : io(
+      
+    )
     return {
       socket: socket,
       user: {

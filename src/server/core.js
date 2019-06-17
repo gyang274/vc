@@ -715,7 +715,7 @@ function resNotes (notes) {
   notes.lake.forEach(
     (lake, id) => {
       news[id].lake = lakeStr[lake] 
-      news[id].points = lakeNum[lake]
+      news[id].points += lakeNum[lake]
     }
   )
 
