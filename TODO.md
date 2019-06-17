@@ -18,6 +18,10 @@
 
 # @/server/db.js
 添加数据库-用户 -> client添加注册/个人战绩查询
+https://blog.jscrambler.com/vue-js-authentication-system-with-node-js-backend
+https://jasonwatmore.com/post/2018/07/14/vue-vuex-user-registration-and-login-tutorial-example
+
+
 添加数据库-牌局
 
 
