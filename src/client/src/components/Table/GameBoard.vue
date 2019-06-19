@@ -362,6 +362,11 @@
         this.userinfos = response.infos.concat(response.names.splice(0, this.user.seat))
         console.log('get-users|usernames:', this.usernames)
         console.log('get-users|userinfos:', this.userinfos)
+        // TODO - what if this.user.seat === -1
+        this.players.forEach(player => {
+          player.name += `(${this.usernames[player.id]})`
+        })
+        this.player.name = `(${this.usernames[this.player.id]})`
       })
       this.socket.on('srv-user-hand-wait-ok', (payload) => {
         let index = (payload.seat - this.user.seat + this.usernames.length) % this.status.length
@@ -463,7 +468,7 @@
           { dian: [false, false], mens: [false, false], shao: [false, false], lake: [false, false], },
         ]
         this.isOnAction = [
-        false, false, false, false, false, false,
+          false, false, false, false, false, false,
         ]
         this.status = [
           'wait', 'wait', 'wait', 'wait', 'wait', 'wait', 

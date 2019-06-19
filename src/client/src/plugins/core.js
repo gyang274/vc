@@ -46,9 +46,9 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
   let prevRanks = Object.keys(prevNumCardsByRank)
 
   // let prevNumCards = _.sum(Object.values(prevNumCardsByRank))
-  console.log('beat1:', numCardsByRank, '--', prevNumCardsByRank)
+  
+  // 大王打小王
   if (prevRanks.includes('0')) {
-    console.log('beat1: in')
     if (numCardsByRank['1'] >= prevNumCardsByRank['0']) {
       numCardsByRank['1'] = numCardsByRank['1'] - prevNumCardsByRank['0']
       delete prevNumCardsByRank['0']
@@ -61,7 +61,7 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
       return false
     }
   }
-  console.log('beat2:', numCardsByRank, '--', prevNumCardsByRank)
+  // 三个2打大王
   if (prevRanks.includes('1')) {
     if (numCardsByRank['2'] >= 3 * prevNumCardsByRank['1']) {
       numCardsByRank['2'] = numCardsByRank['2'] - 3 * prevNumCardsByRank['1']
@@ -75,7 +75,7 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
       return false
     }
   }
-  console.log('beat3:', numCardsByRank, '--', prevNumCardsByRank)
+  // 大小王打纯2
   if (prevRanks.includes['2'] && prevRanks.length === 1) {
     if (numCardsByRank['0'] + numCardsByRank['1'] === prevNumCardsByRank['2'] 
     && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
@@ -85,12 +85,11 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
       return false
     }
   }
-  console.log('beat4:', numCardsByRank, ranks, '--', prevNumCardsByRank, prevRanks)
+  // 无王无2或2带x则大打小
   if (ranks.length === 0 && prevRanks.length === 0) {
     return true
   } else if (_.min(_.map(ranks, r => rankNum[r])) > _.min(_.map(prevRanks, r => rankNum[r]))
           && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))) {
-            console.log('beat5:', numCardsByRank, ranks, '--', prevNumCardsByRank, prevRanks)
     return true
   } else {
     return false

@@ -583,6 +583,20 @@ io.on('connection', (socket) => {
 })
 
 
+function setUser (name) {
+  // TODO: add user registration and read user from database
+  return {
+    name: name, 
+    status: '', 
+    room: '', 
+    table: '', 
+    seat: -1,
+    avatar: '' , 
+    title: '', 
+    coins: 0,
+  }
+}
+
 function isHandEndeProcess (io, socket, payload) {
 
   seats[payload.id].status = 'ende'
@@ -674,7 +688,7 @@ function isGameEndeProcess (io, socket, payload) {
     seats[index].coins = seat.coins + results.news[index].points * 10
   })
   seats.forEach((seat, index) => {
-    seats[index].title = seat.title < 0 ? '贫民' : seat.title < 200 ? '平民' : '士人'
+    seats[index].title = seat.coins < 0 ? '贫民' : seat.coins < 200 ? '平民' : '士人'
   })
 
   results.userinfos = _.map(

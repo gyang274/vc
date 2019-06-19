@@ -1,8 +1,24 @@
 # @/client/
+合并seats.status and notes.status into seats status
+seats.user -> socket.user
+socket.on('disconnect', {
+  socket.user.status = 'left'
+}) 
+when isGameEndeProcess -> still show game results? once click waitOk ->
+if anyone left, then kick every one out and put them back to room re-seat on table
+
+
 显示过牌让牌状态
 
 
-自动进贡
+添加观战模式 when this.user.seat === -1
+
+
+
+自动买3进贡([穿三胡分数加倍，自动会5])，询问是否买4，自动买4，每人只保留一张4
+
+开点 红，打出4不开 绿 -》烧 闷
+
 落第三名是红的？应该是紫的
 弃4只能是4
 烧牌button判定，抢夺出牌权

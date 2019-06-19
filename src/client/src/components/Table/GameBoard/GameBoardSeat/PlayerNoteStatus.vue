@@ -28,6 +28,10 @@
     },
     data: () => ({
       noteStatusMap: {
+        wait: '等待',
+        waitOk: '准备',
+        exec: '贡牌',
+        execOk: '开打',
         play: '听牌',
         pass: '过牌',
         cask: '让牌',

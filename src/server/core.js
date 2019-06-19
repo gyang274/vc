@@ -393,7 +393,7 @@ function isCardsOutBeatenPrevCardsOut (cardsOut, prevCardsOut) {
   }
 
   if (_.min(_.map(ranks, r => rankNum[r])) > _.min(_.map(prevRanks, r => rankNum[r]))
-  && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
+   && _.sum(Object.values(numCardsByRank)) === _.sum(Object.values(prevNumCardsByRank))
   ) {
     return true
   } else {
